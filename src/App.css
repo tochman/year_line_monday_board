@@ -262,6 +262,17 @@ body {
   background-color: var(--primary-background-hover-color);
 }
 
+/* Item edit dialog */
+.item-edit-dialog {
+  min-width: 300px;
+  max-width: 360px;
+  background-color: var(--primary-background-color) !important;
+}
+
+.item-edit-dialog .dropdown-wrapper {
+  width: 100%;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .App {
@@ -276,7 +287,8 @@ body {
     border-bottom: 1px solid var(--ui-border-color);
   }
   
-  .item-tooltip-dialog {
+  .item-tooltip-dialog,
+  .item-edit-dialog {
     min-width: 280px;
     max-width: calc(100vw - 40px);
   }

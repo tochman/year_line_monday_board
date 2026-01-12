@@ -36,7 +36,11 @@ const App = () => {
     error,
     items,
     groups,
+    users,
     updateItemDates,
+    updateItemName,
+    updateItemGroup,
+    updateItemUsers,
   } = useMondayBoard();
 
   console.log('📊 App state:', { loading, error, itemsCount: items?.length, groupsCount: groups?.length });
@@ -128,7 +132,11 @@ const App = () => {
       <GanttView
         items={items}
         groups={groups}
+        users={users}
         onUpdateItem={handleItemUpdate}
+        updateItemName={updateItemName}
+        updateItemGroup={updateItemGroup}
+        updateItemUsers={updateItemUsers}
       />
     </div>
   );

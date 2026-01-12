@@ -20,6 +20,7 @@ const GanttTimelinePane = ({
   colorTheme = 'monday',
   themeColors,
   onItemClick,
+  onItemUpdate,
   onHeaderScroll,
   effectiveWidth,
   scrollRef,
@@ -30,6 +31,17 @@ const GanttTimelinePane = ({
   const [containerWidth, setContainerWidth] = useState(0);
   const internalScrollRef = useRef(null);
   const scrollContainerRef = scrollRef || internalScrollRef;
+  
+  // Drag state
+  const [dragState, setDragState] = useState(null);
+  // dragState = { item, mode: 'move' | 'resize-start' | 'resize-end', startX, startY, originalStartDate, originalEndDate, originalGroupId, currentStartDate, currentEndDate, targetGroupId }
+  
+  // Hover state for showing resize handles
+  const [hoveredBarId, setHoveredBarId] = useState(null);
+  
+  // Track if we're dragging to prevent click from firing
+  const isDraggingRef = useRef(false);
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
   
   // Get bar colors from color theme
   const barColors = COLOR_THEMES[colorTheme]?.colors || COLOR_THEMES.monday.colors;
@@ -54,6 +66,51 @@ const GanttTimelinePane = ({
   const getGroupColor = (groupIndex) => {
     // Use bar colors from color theme, cycling through the palette
     return barColors[groupIndex % barColors.length];
+  };
+  
+  // Calculate Y positions for each group
+  const groupYPositions = useMemo(() => {
+    const positions = [];
+    let currentY = 0;
+    
+    Object.entries(groupedItems).forEach(([groupId, items]) => {
+      const startY = currentY;
+      currentY += GROUP_HEADER_HEIGHT;
+      
+      if (expandedGroups[groupId]) {
+        currentY += items.length * ITEM_ROW_HEIGHT;
+      }
+      
+      positions.push({
+        groupId,
+        startY,
+        endY: currentY
+      });
+    });
+    
+    return positions;
+  }, [groupedItems, expandedGroups]);
+  
+  // Get group at Y position
+  const getGroupAtY = (y) => {
+    for (const pos of groupYPositions) {
+      if (y >= pos.startY && y < pos.endY) {
+        return pos.groupId;
+      }
+    }
+    return null;
+  };
+  
+  // Detect drag zone based on mouse position relative to bar
+  const getDragZone = (mouseX, barStartX, barWidth) => {
+    const RESIZE_ZONE = 10; // pixels from edge to trigger resize
+    
+    if (mouseX < barStartX + RESIZE_ZONE) {
+      return 'resize-start';
+    } else if (mouseX > barStartX + barWidth - RESIZE_ZONE) {
+      return 'resize-end';
+    }
+    return 'move';
   };
   
   // Generate time ticks based on zoom level

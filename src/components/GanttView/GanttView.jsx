@@ -3,6 +3,7 @@ import { startOfMonth, endOfMonth, addMonths, startOfWeek, endOfWeek, addWeeks, 
 import GanttToolbar from './GanttToolbar';
 import GanttRowPane from './GanttRowPane';
 import GanttTimelinePane from './GanttTimelinePane';
+import ItemEditDialog from '../ItemEditDialog';
 import { useMondayGanttData } from './useMondayGanttData';
 import { useTimeScale } from './useTimeScale';
 import { useMondayTheme } from '../../hooks/useMondayTheme';
@@ -15,18 +16,27 @@ import { Text } from "@vibe/core";
  * - Group-based swimlanes
  * - Timeline bars
  * - Pan and zoom capabilities
+ * - Item editing dialog
  * - Automatic theme adaptation via CSS variables
  * 
  * @param {Array} items - Monday.com items with startDate/endDate
  * @param {Array} groups - Monday.com groups
+ * @param {Array} users - Monday.com users for assignment
  * @param {Function} onUpdateItem - Callback when item is updated
+ * @param {Function} updateItemName - Callback to update item name
+ * @param {Function} updateItemGroup - Callback to update item group
+ * @param {Function} updateItemUsers - Callback to update item users
  */
 const GanttView = ({
   items = [],
   groups = [],
+  users = [],
   onUpdateItem,
+  updateItemName,
+  updateItemGroup,
+  updateItemUsers,
 }) => {
-  console.log('🎨 GanttView rendering with:', { itemsCount: items?.length, groupsCount: groups?.length });
+  console.log('🎨 GanttView rendering with:', { itemsCount: items?.length, groupsCount: groups?.length, usersCount: users?.length });
   
   // Get theme colors from CSS variables (requires body class to be set by App.jsx)
   const { themeColors } = useMondayTheme();
@@ -36,6 +46,10 @@ const GanttView = ({
   const [expandedGroups, setExpandedGroups] = useState({});
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [colorTheme, setColorTheme] = useState('monday');
+  
+  // Edit dialog state
+  const [editingItem, setEditingItem] = useState(null);
+  const [dialogPosition, setDialogPosition] = useState(null);
   
   // Time scale state
   const [viewStart, setViewStart] = useState(() => {
@@ -305,8 +319,19 @@ const GanttView = ({
     }));
   };
   
-  const handleRowItemClick = (item) => {
+  const handleRowItemClick = (item, event) => {
     setSelectedItemId(item.id);
+    
+    // Open edit dialog
+    if (event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setDialogPosition({
+        x: rect.right,
+        y: rect.top
+      });
+      setEditingItem(item);
+      console.log('📝 Opening edit dialog for item:', item.name);
+    }
     
     if (timelineScrollRef.current && item.startDate) {
       const scrollContainer = timelineScrollRef.current;
@@ -325,7 +350,55 @@ const GanttView = ({
   
   const handleBarClick = (item, event) => {
     setSelectedItemId(item.id);
-    // Could show a tooltip here in the future
+    
+    // Open edit dialog at click position
+    if (event) {
+      setDialogPosition({
+        x: event.clientX,
+        y: event.clientY
+      });
+      setEditingItem(item);
+      console.log('📝 Opening edit dialog for item:', item.name);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setEditingItem(null);
+    setDialogPosition(null);
+  };
+
+  const handleItemUpdate = async (updates) => {
+    console.log('💾 Handling item updates:', updates);
+
+    try {
+      // Update name if changed
+      if (updates.name !== editingItem.name && updateItemName) {
+        await updateItemName(updates.id, updates.name);
+      }
+
+      // Update group if changed
+      if (updates.groupId !== editingItem.group?.id && updateItemGroup) {
+        await updateItemGroup(updates.id, updates.groupId);
+      }
+
+      // Update users if changed
+      if (JSON.stringify(updates.userIds?.sort()) !== JSON.stringify(editingItem.assignedUserIds?.sort()) && updateItemUsers) {
+        await updateItemUsers(updates.id, updates.userIds || []);
+      }
+
+      // Update dates if changed
+      if ((updates.startDate !== editingItem.startDate || updates.endDate !== editingItem.endDate) && onUpdateItem) {
+        await onUpdateItem({
+          ...editingItem,
+          startDate: updates.startDate,
+          endDate: updates.endDate
+        });
+      }
+
+      console.log('✅ Item updated successfully');
+    } catch (err) {
+      console.error('❌ Error updating item:', err);
+    }
   };
   
   return (
@@ -481,6 +554,18 @@ const GanttView = ({
           scrollRef={timelineScrollRef}
         />
       </div>
+
+      {/* Item Edit Dialog */}
+      {editingItem && dialogPosition && (
+        <ItemEditDialog
+          item={editingItem}
+          position={dialogPosition}
+          groups={groups}
+          users={users}
+          onClose={handleCloseDialog}
+          onUpdate={handleItemUpdate}
+        />
+      )}
     </div>
   );
 };

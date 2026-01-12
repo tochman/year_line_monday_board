@@ -90,7 +90,7 @@ const GanttRowPane = ({
             {items.map(item => (
               <div
                 key={item.id}
-                onClick={() => onItemClick(item)}
+                onClick={(e) => onItemClick(item, e)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
