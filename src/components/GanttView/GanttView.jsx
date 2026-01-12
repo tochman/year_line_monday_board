@@ -31,10 +31,12 @@ const GanttView = ({
   items = [],
   groups = [],
   users = [],
+  columns = [],
   onUpdateItem,
   updateItemName,
   updateItemGroup,
   updateItemUsers,
+  updateItemStatus,
 }) => {
   
   // Get theme colors from CSS variables (requires body class to be set by App.jsx)
@@ -92,10 +94,32 @@ const GanttView = ({
     return Math.max(800, totalDays * pixelsPerDay);
   }, [viewStart, viewEnd, zoomLevel]);
   
+  // Extract status options from columns
+  const statusOptions = useMemo(() => {
+    const statusColumn = columns.find(col => col.type === 'status' || col.type === 'color');
+    if (!statusColumn || !statusColumn.settings_str) return [];
+    
+    try {
+      const settings = JSON.parse(statusColumn.settings_str);
+      if (settings.labels) {
+        // Convert labels object to array of { index, label, color }
+        return Object.entries(settings.labels).map(([index, label]) => ({
+          index: parseInt(index, 10),
+          label: label,
+          color: settings.labels_colors?.[index]?.color || null
+        }));
+      }
+    } catch (err) {
+      // Ignore parse errors
+    }
+    return [];
+  }, [columns]);
+  
   // Transform data for Gantt display
-  const { groupedItems, allItems, availableYears } = useMondayGanttData({
+  const { groupedItems, allItems, availableYears, statusLabelsMap } = useMondayGanttData({
     items,
     groups,
+    columns,
     yearFilter,
     groupBy,
     userFilter,
@@ -393,6 +417,11 @@ const GanttView = ({
         await updateItemUsers(updates.id, updates.userIds || []);
       }
 
+      // Update status if changed
+      if (updates.statusIndex !== undefined && updates.statusIndex !== editingItem.statusIndex && updateItemStatus) {
+        await updateItemStatus(updates.id, updates.statusIndex);
+      }
+
       // Update dates if changed
       if ((updates.startDate !== editingItem.startDate || updates.endDate !== editingItem.endDate) && onUpdateItem) {
         await onUpdateItem({
@@ -630,6 +659,7 @@ const GanttView = ({
           position={dialogPosition}
           groups={groups}
           users={users}
+          statusOptions={statusOptions}
           onClose={handleCloseDialog}
           onUpdate={handleItemUpdate}
         />

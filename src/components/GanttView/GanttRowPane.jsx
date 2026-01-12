@@ -23,10 +23,11 @@ const GanttRowPane = ({
     if (groupBy === 'groups') {
       return groups.find(g => g.id === groupId) || { title: 'Unknown', color: '#94A3B8' };
     } else if (groupBy === 'status') {
-      // For status grouping, use the first item's statusLabel
+      // For status grouping, groupId is the status label itself
+      // Get color from the first item's statusColor
       const items = groupedItems[groupId] || [];
-      const label = items[0]?.statusLabel || (groupId === 'no-status' ? 'No Status' : groupId);
-      return { title: label, color: '#94A3B8' };
+      const color = items[0]?.statusColor || '#94A3B8';
+      return { title: groupId, color: color };
     }
     return { title: 'Unknown', color: '#94A3B8' };
   };

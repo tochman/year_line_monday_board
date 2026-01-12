@@ -1035,6 +1035,101 @@ export const useMondayBoard = () => {
   };
 
   /**
+   * Update an item's status
+   * @param {string} itemId - Item ID
+   * @param {string|number} statusIndex - The status label index to set
+   */
+  const updateItemStatus = async (itemId, statusIndex) => {
+    if (useMockData) {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === itemId) {
+            const updatedColumnValues = item.column_values.map(cv => {
+              if (cv.type === 'status') {
+                return { ...cv, value: JSON.stringify({ index: statusIndex }) };
+              }
+              return cv;
+            });
+            return { ...item, column_values: updatedColumnValues };
+          }
+          return item;
+        });
+      });
+      return { success: true, mock: true };
+    }
+
+    try {
+      const boardId = context?.boardId || context?.boardIds?.[0];
+      if (!boardId) {
+        throw new Error('No board ID available');
+      }
+
+      // Find the status column
+      const statusColumn = columns.find(c => c.type === 'status' || c.type === 'color');
+      if (!statusColumn) {
+        throw new Error('No status column found');
+      }
+
+      const mutation = `
+        mutation (
+          $boardId: ID!,
+          $itemId: ID!,
+          $columnId: String!,
+          $value: JSON!
+        ) {
+          change_column_value(
+            board_id: $boardId,
+            item_id: $itemId,
+            column_id: $columnId,
+            value: $value
+          ) {
+            id
+            name
+          }
+        }
+      `;
+
+      const variables = {
+        boardId: parseInt(boardId),
+        itemId: parseInt(itemId),
+        columnId: statusColumn.id,
+        value: JSON.stringify({ index: statusIndex })
+      };
+
+      await monday.api(mutation, { variables });
+
+      // Set skip flag to prevent immediate refetch from overwriting optimistic update
+      window.__skipNextBoardRefetch = true;
+
+      // Update local state optimistically
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === itemId) {
+            const updatedColumnValues = item.column_values.map(cv => {
+              if (cv.id === statusColumn.id) {
+                return { ...cv, value: JSON.stringify({ index: statusIndex }) };
+              }
+              return cv;
+            });
+            return { ...item, column_values: updatedColumnValues };
+          }
+          return item;
+        });
+      });
+
+      return { success: true, statusIndex };
+    } catch (err) {
+      console.error('❌ Error updating item status:', err);
+      monday.execute('notice', {
+        message: 'Failed to update status: ' + err.message,
+        type: 'error',
+        timeout: 3000
+      });
+      throw err;
+    }
+  };
+
+  /**
    * Create a new group on the Monday.com board
    * @param {string} groupName - Name for the new group
    * @param {string} ringType - Type of ring ('inner' or 'outer') - stored in App.jsx wheel structure
@@ -1528,6 +1623,7 @@ export const useMondayBoard = () => {
     updateItemGroup,
     updateItemName,
     updateItemUsers,
+    updateItemStatus,
     createItem,
     createGroup,
     updateGroup,

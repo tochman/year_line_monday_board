@@ -10,25 +10,52 @@ import { useMemo } from 'react';
  * 
  * @param {Array} items - Monday.com items with column_values array
  * @param {Array} groups - Monday.com groups
+ * @param {Array} columns - Monday.com columns (for status label mapping)
  * @param {string} yearFilter - 'all' or specific year
  * @param {string} groupBy - 'groups' or 'status'
  * @param {string} userFilter - 'all' or user ID
- * @returns {Object} { groupedItems, allItems, availableYears }
+ * @returns {Object} { groupedItems, allItems, availableYears, statusLabels }
  */
 export const useMondayGanttData = ({
   items = [],
   groups = [],
+  columns = [],
   yearFilter,
   groupBy = 'groups',
   userFilter = 'all',
 }) => {
+  // Extract status labels from column settings
+  const statusLabelsMap = useMemo(() => {
+    const statusColumn = columns.find(col => col.type === 'status' || col.type === 'color');
+    if (!statusColumn || !statusColumn.settings_str) return {};
+    
+    try {
+      const settings = JSON.parse(statusColumn.settings_str);
+      if (settings.labels) {
+        // Create a map from index to label info
+        const map = {};
+        Object.entries(settings.labels).forEach(([index, label]) => {
+          map[index] = {
+            label: label,
+            color: settings.labels_colors?.[index]?.color || '#94A3B8'
+          };
+        });
+        return map;
+      }
+    } catch (err) {
+      // Ignore parse errors
+    }
+    return {};
+  }, [columns]);
+
   // Transform Monday items to extract dates and status from column_values
   const transformedItems = useMemo(() => {
     return items.map(item => {
       let startDate = null;
       let endDate = null;
-      let status = null;
+      let statusIndex = null;
       let statusLabel = 'No Status';
+      let statusColor = '#94A3B8';
       let assignedUserIds = [];
       
       // Parse column_values to find dates, status, and assigned users
@@ -48,12 +75,21 @@ export const useMondayGanttData = ({
               startDate = dateData.date;
               endDate = dateData.date; // Single day item
             }
-          } else if (col.type === 'status' && !status) {
+          } else if (col.type === 'status' && statusIndex === null) {
             // Parse status column
             const statusData = JSON.parse(col.value);
-            if (statusData.label || statusData.text) {
-              status = statusData.index || statusData.label || statusData.text;
-              statusLabel = statusData.label || statusData.text || 'Unknown';
+            if (statusData.index !== undefined) {
+              statusIndex = statusData.index;
+              // Look up label from column settings
+              const labelInfo = statusLabelsMap[statusData.index];
+              if (labelInfo) {
+                statusLabel = labelInfo.label;
+                statusColor = labelInfo.color;
+              } else if (statusData.label || statusData.text) {
+                statusLabel = statusData.label || statusData.text;
+              }
+            } else if (statusData.label || statusData.text) {
+              statusLabel = statusData.label || statusData.text;
             }
           } else if (col.type === 'people' || col.type === 'person') {
             // Parse people column
@@ -75,12 +111,13 @@ export const useMondayGanttData = ({
         ...item,
         startDate,
         endDate: endDate || startDate,
-        status,
+        statusIndex,
         statusLabel,
+        statusColor,
         assignedUserIds,
       };
     }).filter(item => item.startDate); // Only include items with dates
-  }, [items]);
+  }, [items, statusLabelsMap]);
 
   // Extract years from items and calculate available years
   const availableYears = useMemo(() => {
@@ -143,9 +180,9 @@ export const useMondayGanttData = ({
         }
       });
     } else if (groupBy === 'status') {
-      // Group by status
+      // Group by status label (the human-readable text)
       filteredItems.forEach(item => {
-        const statusKey = item.status || 'no-status';
+        const statusKey = item.statusLabel || 'No Status';
         if (!grouped[statusKey]) {
           grouped[statusKey] = [];
         }
@@ -167,5 +204,6 @@ export const useMondayGanttData = ({
     groupedItems,
     allItems: filteredItems,
     availableYears,
+    statusLabelsMap,
   };
 };

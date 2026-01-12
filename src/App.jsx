@@ -35,10 +35,12 @@ const App = () => {
     items,
     groups,
     users,
+    columns,
     updateItemDates,
     updateItemName,
     updateItemGroup,
     updateItemUsers,
+    updateItemStatus,
   } = useMondayBoard();
 
   // Apply Monday.com theme class to body - THIS IS WHAT MAKES CSS VARIABLES WORK
@@ -117,10 +119,12 @@ const App = () => {
         items={items}
         groups={groups}
         users={users}
+        columns={columns}
         onUpdateItem={handleItemUpdate}
         updateItemName={updateItemName}
         updateItemGroup={updateItemGroup}
         updateItemUsers={updateItemUsers}
+        updateItemStatus={updateItemStatus}
       />
     </div>
   );

@@ -70,7 +70,7 @@ const GanttToolbar = ({
       {/* Left: Title and Year selector */}
       <Flex gap="large" align="center">
         <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: themeColors.primaryText }}>
-          Gantt Timeline
+          Timeline
         </h2>
         
         <Flex gap="medium" align="center">

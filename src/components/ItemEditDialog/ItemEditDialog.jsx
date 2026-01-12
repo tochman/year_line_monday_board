@@ -9,6 +9,7 @@ import { Close, Calendar } from '@vibe/icons';
  * - Name
  * - Group assignment
  * - User assignments (multi-select)
+ * - Status
  * - Start and end dates
  */
 const ItemEditDialog = ({
@@ -16,6 +17,7 @@ const ItemEditDialog = ({
   position,
   groups,
   users,
+  statusOptions = [],
   onClose,
   onUpdate,
 }) => {
@@ -24,6 +26,7 @@ const ItemEditDialog = ({
   const [editedEndDate, setEditedEndDate] = useState(item?.endDate || '');
   const [editedGroupId, setEditedGroupId] = useState(item?.group?.id || '');
   const [editedUserIds, setEditedUserIds] = useState(item?.assignedUserIds || []);
+  const [editedStatusIndex, setEditedStatusIndex] = useState(item?.statusIndex ?? null);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Track if any field changed
@@ -33,11 +36,12 @@ const ItemEditDialog = ({
     const endDateChanged = editedEndDate !== (item.endDate || '');
     const groupIdChanged = editedGroupId !== item.group?.id;
     const usersChanged = JSON.stringify(editedUserIds.sort()) !== JSON.stringify((item.assignedUserIds || []).sort());
+    const statusChanged = editedStatusIndex !== (item.statusIndex ?? null);
     
     setHasChanges(
-      nameChanged || startDateChanged || endDateChanged || groupIdChanged || usersChanged
+      nameChanged || startDateChanged || endDateChanged || groupIdChanged || usersChanged || statusChanged
     );
-  }, [editedName, editedStartDate, editedEndDate, editedGroupId, editedUserIds, item]);
+  }, [editedName, editedStartDate, editedEndDate, editedGroupId, editedUserIds, editedStatusIndex, item]);
 
   // Validate dates
   const hasDateError = 
@@ -54,6 +58,7 @@ const ItemEditDialog = ({
       endDate: editedEndDate || null,
       groupId: editedGroupId,
       userIds: editedUserIds,
+      statusIndex: editedStatusIndex,
     });
 
     onClose();
@@ -65,6 +70,7 @@ const ItemEditDialog = ({
     setEditedEndDate(item.endDate || '');
     setEditedGroupId(item.group?.id || '');
     setEditedUserIds(item.assignedUserIds || []);
+    setEditedStatusIndex(item.statusIndex ?? null);
     onClose();
   };
 
@@ -160,6 +166,29 @@ const ItemEditDialog = ({
           </Text>
         )}
       </div>
+
+      {/* Status selector */}
+      {statusOptions.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          <Text type="text3" weight="medium" color="secondary" style={{ marginBottom: '4px', display: 'block' }}>
+            Status
+          </Text>
+          <Dropdown
+            placeholder="Select status"
+            options={statusOptions.map((status) => ({
+              value: status.index,
+              label: status.label,
+            }))}
+            value={editedStatusIndex !== null ? {
+              value: editedStatusIndex,
+              label: statusOptions.find(s => s.index === editedStatusIndex)?.label || 'Unknown'
+            } : null}
+            onChange={(option) => setEditedStatusIndex(option?.value ?? null)}
+            size="medium"
+            clearable
+          />
+        </div>
+      )}
 
       {/* Start date */}
       <div style={{ marginBottom: '12px' }}>
