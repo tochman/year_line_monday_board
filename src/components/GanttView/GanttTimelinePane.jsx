@@ -277,8 +277,6 @@ const GanttTimelinePane = ({
         updatedItem.groupId = targetGroupId;
       }
       
-      console.log('📦 Drag ended - calling onItemUpdate with:', updatedItem);
-      
       if (onItemUpdate) {
         onItemUpdate(updatedItem);
       }

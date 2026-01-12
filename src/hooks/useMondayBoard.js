@@ -873,11 +873,7 @@ export const useMondayBoard = () => {
           value: JSON.stringify({ from: startDate, to: endDate })
         };
         
-        console.log('📡 Calling Monday API to update timeline:', variables);
-        
         const result = await monday.api(mutation, { variables });
-        
-        console.log('📡 Monday API response:', result);
         
         // Check for GraphQL errors in response
         if (result.errors && result.errors.length > 0) {
@@ -914,11 +910,7 @@ export const useMondayBoard = () => {
           value: JSON.stringify({ date: startDate })
         };
         
-        console.log('📡 Calling Monday API to update date:', variables);
-        
         const result = await monday.api(mutation, { variables });
-        
-        console.log('📡 Monday API response:', result);
         
         // Check for GraphQL errors in response
         if (result.errors && result.errors.length > 0) {
@@ -931,7 +923,7 @@ export const useMondayBoard = () => {
         throw new Error('No date or timeline column found');
       }
     } catch (err) {
-      console.error('❌ Error updating item:', err);
+      console.error('Error updating item dates:', err);
       monday.execute('notice', {
         message: 'Failed to update item: ' + err.message,
         type: 'error',
@@ -996,7 +988,7 @@ export const useMondayBoard = () => {
       
       return { success: true, groupId };
     } catch (err) {
-      console.error('❌ Error updating item group:', err);
+      console.error('Error updating item group:', err);
       monday.execute('notice', {
         message: 'Failed to move item: ' + err.message,
         type: 'error',

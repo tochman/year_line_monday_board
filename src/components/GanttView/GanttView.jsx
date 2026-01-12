@@ -36,7 +36,6 @@ const GanttView = ({
   updateItemGroup,
   updateItemUsers,
 }) => {
-  console.log('🎨 GanttView rendering with:', { itemsCount: items?.length, groupsCount: groups?.length, usersCount: users?.length });
   
   // Get theme colors from CSS variables (requires body class to be set by App.jsx)
   const { themeColors } = useMondayTheme();
@@ -96,12 +95,6 @@ const GanttView = ({
     items,
     groups,
     yearFilter,
-  });
-  
-  console.log('🔄 Transformed data:', { 
-    groupedItemsKeys: Object.keys(groupedItems), 
-    allItemsCount: allItems?.length,
-    availableYears 
   });
   
   // Constants for row heights - must match both panes
@@ -330,7 +323,6 @@ const GanttView = ({
         y: rect.top
       });
       setEditingItem(item);
-      console.log('📝 Opening edit dialog for item:', item.name);
     }
     
     if (timelineScrollRef.current && item.startDate) {
@@ -358,7 +350,6 @@ const GanttView = ({
         y: event.clientY
       });
       setEditingItem(item);
-      console.log('📝 Opening edit dialog for item:', item.name);
     }
   };
 
@@ -368,8 +359,6 @@ const GanttView = ({
   };
 
   const handleItemUpdate = async (updates) => {
-    console.log('💾 Handling item updates:', updates);
-
     try {
       // Update name if changed
       if (updates.name !== editingItem.name && updateItemName) {
@@ -394,22 +383,16 @@ const GanttView = ({
           endDate: updates.endDate
         });
       }
-
-      console.log('✅ Item updated successfully');
     } catch (err) {
-      console.error('❌ Error updating item:', err);
+      console.error('Error updating item:', err);
     }
   };
 
   // Handle drag/drop updates from timeline (optimistic)
   const handleDragDropUpdate = async (updatedItem) => {
-    console.log('🎯 Handling drag/drop update:', updatedItem);
-
     try {
-      // Check if dates changed
       const originalItem = allItems.find(i => i.id === updatedItem.id);
       if (!originalItem) {
-        console.error('Original item not found for drag update');
         return;
       }
 
@@ -423,37 +406,19 @@ const GanttView = ({
 
       // Update dates if changed
       if (datesChanged && onUpdateItem) {
-        console.log('📅 Updating dates:', { 
-          itemId: updatedItem.id, 
-          from: originalItem.startDate, 
-          to: updatedItem.startDate,
-          fromEnd: originalItem.endDate,
-          toEnd: updatedItem.endDate
-        });
-        
         await onUpdateItem({
           ...originalItem,
           startDate: updatedItem.startDate,
           endDate: updatedItem.endDate
         });
-        console.log('✅ Dates updated via drag');
       }
 
       // Update group if changed (only if groupId is explicitly set)
       if (groupChanged && updateItemGroup) {
-        console.log('📁 Updating group:', { itemId: updatedItem.id, newGroupId: updatedItem.groupId });
         await updateItemGroup(updatedItem.id, updatedItem.groupId);
-        console.log('✅ Group updated via drag');
       }
-
-      console.log('✅ Drag/drop update complete');
     } catch (err) {
-      console.error('❌ Error in drag/drop update:', err);
-      console.error('Error details:', {
-        message: err.message,
-        stack: err.stack,
-        error: err
-      });
+      console.error('Error in drag/drop update:', err);
       
       // Clear the skip flag on error
       delete window.__skipNextBoardRefetch;

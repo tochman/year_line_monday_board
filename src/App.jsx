@@ -25,8 +25,6 @@ if (isDevelopment && import.meta.env.VITE_MONDAY_API_TOKEN) {
 }
 
 const App = () => {
-  console.log('🚀 App component mounting');
-  
   // Track Monday.com theme for applying body class
   const [mondayTheme, setMondayTheme] = useState('light');
   
@@ -42,8 +40,6 @@ const App = () => {
     updateItemGroup,
     updateItemUsers,
   } = useMondayBoard();
-
-  console.log('📊 App state:', { loading, error, itemsCount: items?.length, groupsCount: groups?.length });
 
   // Apply Monday.com theme class to body - THIS IS WHAT MAKES CSS VARIABLES WORK
   useEffect(() => {
@@ -72,40 +68,25 @@ const App = () => {
     monday.execute("valueCreatedForUser");
   }, []);
 
-  // Log whenever items or groups change
-  useEffect(() => {
-    console.log('📦 Data updated - Items:', items?.length || 0, 'Groups:', groups?.length || 0);
-    if (items?.length > 0) {
-      console.log('📋 First item sample:', items[0]);
-    }
-    if (groups?.length > 0) {
-      console.log('📁 Groups:', groups);
-    }
-  }, [items, groups]);
+
 
   // Handle item update from Gantt (if drag/resize is enabled in future)
   const handleItemUpdate = useCallback(
     async (updatedItem) => {
-      console.log('🔄 handleItemUpdate called with:', updatedItem);
-      
       if (updatedItem && updatedItem.id) {
         const startDate = updatedItem.startDate;
         const endDate = updatedItem.endDate;
 
         // Validate dates
         if (endDate && startDate && endDate < startDate) {
-          console.warn("End date before start date, skipping update");
           return;
         }
 
         try {
-          // Save to Monday.com
-          console.log('💾 Calling updateItemDates:', { itemId: updatedItem.id, startDate, endDate });
-          const result = await updateItemDates(updatedItem.id, startDate, endDate);
-          console.log('✅ updateItemDates result:', result);
+          await updateItemDates(updatedItem.id, startDate, endDate);
         } catch (error) {
-          console.error('❌ Error in handleItemUpdate:', error);
-          throw error; // Re-throw to let GanttView handle it
+          console.error('Error updating item:', error);
+          throw error;
         }
       }
     },
@@ -114,7 +95,6 @@ const App = () => {
 
   // Show loading state
   if (loading) {
-    console.log('⏳ Rendering loading state');
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <WheelLoader />
@@ -124,7 +104,6 @@ const App = () => {
 
   // Show error state
   if (error) {
-    console.error('❌ Rendering error state:', error);
     return (
       <Box padding="large">
         <Text type="text1" color="negative">
@@ -133,8 +112,6 @@ const App = () => {
       </Box>
     );
   }
-
-  console.log('✨ Rendering GanttView with', items?.length, 'items and', groups?.length, 'groups');
   
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
