@@ -1,0 +1,18 @@
+.settings-panel {
+  background: var(--primary-background-color);
+  border-right: 1px solid var(--ui-border-color);
+  padding: 16px;
+  width: 260px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.setting-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--primary-text-color);
+}
+
+.settings-panel .divider-component {
+  margin: 8px 0;
+}

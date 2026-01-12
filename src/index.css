@@ -1,0 +1,38 @@
+body {
+  margin: 0;
+  /* 
+   * Use Vibe's font variable if available, otherwise inherit from Monday.com parent.
+   * The font-family will be dynamically set via JavaScript when theme changes.
+   */
+  font-family: var(--font-family, inherit);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 
+ * Dark theme border color override
+ * Vibe's --ui-border-color can be too light on some dark themes
+ * Note: Monday.com uses underscores in some theme names (e.g., hacker_theme)
+ */
+.dark-app-theme,
+.black-app-theme,
+.night-app-theme,
+.hacker-app-theme,
+.hacker_theme-app-theme {
+  --ui-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/*
+ * Hacker theme monospace font
+ * Apply to ALL elements to match Monday.com's terminal aesthetic
+ * Uses !important to override component-level font definitions
+ */
+.hacker_theme-app-theme,
+.hacker_theme-app-theme * {
+  font-family: "Hack", "Fira Code", "Source Code Pro", Consolas, Monaco, monospace !important;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

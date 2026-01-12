@@ -1,0 +1,215 @@
+/* Settings Dialog - Fixed size modal */
+.settings-dialog-modal {
+  width: 600px !important;
+  min-width: 600px !important;
+  max-width: 600px !important;
+}
+
+.settings-dialog-tabs {
+  margin-bottom: 20px;
+}
+
+.settings-dialog-content {
+  height: 450px !important;
+  min-height: 450px !important;
+  max-height: 450px !important;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Section styling */
+.settings-section {
+  margin-bottom: 4px;
+}
+
+.settings-help-text {
+  margin-top: 2px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.settings-divider {
+  margin: 20px 0;
+}
+
+/* Radio row - left aligned */
+.settings-radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.settings-radio-row:hover {
+  background-color: var(--primary-background-hover-color);
+}
+
+.settings-radio-row.compact {
+  padding: 8px 12px;
+}
+
+.settings-radio-row.compact:hover {
+  background-color: var(--primary-background-hover-color);
+}
+
+/* Color mode section */
+.settings-color-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Palette list - compact rows */
+.settings-palette-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.settings-palette-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 2px solid var(--ui-border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-palette-row:hover {
+  border-color: var(--primary-color);
+  background-color: var(--primary-background-hover-color);
+}
+
+.settings-palette-row.selected {
+  border-color: var(--primary-color);
+  background-color: var(--primary-selected-color);
+}
+
+.settings-palette-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.settings-palette-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-palette-colors {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.settings-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Ring preview */
+.settings-ring-preview {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-preview-row > span:first-child {
+  min-width: 80px;
+}
+
+.settings-preview-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-preview-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Toggle row */
+.settings-toggle-row {
+  margin-top: 8px;
+}
+
+/* Sub options (indented) */
+.settings-sub-options {
+  margin-left: 28px;
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--ui-border-color);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .settings-palette-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .settings-palette-colors {
+    margin-left: 36px;
+  }
+}
+
+/* Dark theme */
+:global(.dark-app-theme) .settings-palette-row {
+  border-color: var(--ui-border-color, #3d3d3d);
+}
+
+:global(.dark-app-theme) .settings-palette-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark-app-theme) .settings-palette-row.selected {
+  background-color: rgba(0, 115, 234, 0.15);
+}
+
+:global(.dark-app-theme) .settings-swatch,
+:global(.dark-app-theme) .settings-preview-swatch {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:global(.dark-app-theme) .settings-sub-options {
+  border-left-color: var(--ui-border-color, #3d3d3d);
+}
+
+/* Hacker theme */
+:global(.hacker-theme) .settings-palette-row {
+  border-color: rgba(0, 255, 0, 0.3);
+}
+
+:global(.hacker-theme) .settings-palette-row:hover {
+  border-color: rgba(0, 255, 0, 0.6);
+  background-color: rgba(0, 255, 0, 0.05);
+}
+
+:global(.hacker-theme) .settings-palette-row.selected {
+  border-color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+:global(.hacker-theme) .settings-sub-options {
+  border-left-color: rgba(0, 255, 0, 0.3);
+}

@@ -1,0 +1,121 @@
+import { useMemo } from 'react';
+
+/**
+ * useMondayGanttData Hook
+ * 
+ * Transforms Monday.com board data into Gantt-ready format
+ * Parses column_values to extract dates from timeline/date columns
+ * Groups items by Monday groups
+ * Filters by year if specified
+ * 
+ * @param {Array} items - Monday.com items with column_values array
+ * @param {Array} groups - Monday.com groups
+ * @param {string} yearFilter - 'all' or specific year
+ * @returns {Object} { groupedItems, allItems, availableYears }
+ */
+export const useMondayGanttData = ({
+  items = [],
+  groups = [],
+  yearFilter,
+}) => {
+  // Transform Monday items to extract dates from column_values
+  const transformedItems = useMemo(() => {
+    return items.map(item => {
+      let startDate = null;
+      let endDate = null;
+      
+      // Parse column_values to find dates
+      item.column_values?.forEach(col => {
+        if (!col.value) return;
+        
+        try {
+          if (col.type === 'timeline') {
+            const timelineData = JSON.parse(col.value);
+            if (timelineData.from) {
+              startDate = timelineData.from;
+              endDate = timelineData.to || timelineData.from;
+            }
+          } else if (col.type === 'date' && !startDate) {
+            const dateData = JSON.parse(col.value);
+            if (dateData.date) {
+              startDate = dateData.date;
+              endDate = dateData.date; // Single day item
+            }
+          }
+        } catch (err) {
+          // Skip invalid JSON
+        }
+      });
+      
+      return {
+        ...item,
+        startDate,
+        endDate: endDate || startDate,
+      };
+    }).filter(item => item.startDate); // Only include items with dates
+  }, [items]);
+
+  // Extract years from items and calculate available years
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    transformedItems.forEach(item => {
+      if (item.startDate) {
+        years.add(new Date(item.startDate).getFullYear());
+      }
+      if (item.endDate) {
+        years.add(new Date(item.endDate).getFullYear());
+      }
+    });
+    return [...years].sort((a, b) => a - b);
+  }, [transformedItems]);
+
+  // Filter items based on yearFilter
+  const filteredItems = useMemo(() => {
+    if (yearFilter === 'all') {
+      return transformedItems;
+    }
+    
+    const filterYear = parseInt(yearFilter, 10);
+    return transformedItems.filter(item => {
+      if (!item.startDate || !item.endDate) return false;
+      
+      const startYear = new Date(item.startDate).getFullYear();
+      const endYear = new Date(item.endDate).getFullYear();
+      // Include if item overlaps with the filtered year
+      return startYear <= filterYear && endYear >= filterYear;
+    });
+  }, [transformedItems, yearFilter]);
+
+  // Group items by Monday group
+  const groupedItems = useMemo(() => {
+    const grouped = {};
+    
+    // Initialize groups from Monday groups
+    groups.forEach(group => {
+      grouped[group.id] = [];
+    });
+    
+    // Distribute items to groups
+    filteredItems.forEach(item => {
+      const groupId = item.group?.id;
+      if (groupId && grouped[groupId]) {
+        grouped[groupId].push(item);
+      }
+    });
+    
+    // Sort items within each group by start date
+    Object.keys(grouped).forEach(groupId => {
+      grouped[groupId].sort((a, b) => 
+        new Date(a.startDate) - new Date(b.startDate)
+      );
+    });
+    
+    return grouped;
+  }, [filteredItems, groups]);
+
+  return {
+    groupedItems,
+    allItems: filteredItems,
+    availableYears,
+  };
+};

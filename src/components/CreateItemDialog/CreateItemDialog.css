@@ -1,0 +1,100 @@
+.create-item-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.15s ease-out;
+  backdrop-filter: blur(2px);
+}
+
+.create-item-dialog {
+  background-color: var(--primary-background-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  width: 480px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Form layout - left align all content */
+.create-item-dialog-form {
+  text-align: left;
+}
+
+.create-item-dialog-form > div {
+  text-align: left;
+}
+
+/* Dropdown styling for better visibility */
+.create-item-dialog .group-dropdown-wrapper {
+  width: 100%;
+}
+
+.create-item-dialog .group-dropdown-wrapper .dropdown-wrapper {
+  width: 100%;
+}
+
+/* Fix Vibe dropdown button visibility */
+.create-item-dialog [class*="dropdown"] button,
+.create-item-dialog [class*="Dropdown"] button {
+  border: 1px solid var(--ui-border-color, #d0d4e4) !important;
+  background-color: var(--primary-background-color) !important;
+  width: 100%;
+  min-height: 40px;
+}
+
+.create-item-dialog [class*="dropdown"] button:hover,
+.create-item-dialog [class*="Dropdown"] button:hover {
+  border-color: var(--primary-color) !important;
+}
+
+/* Date fields row */
+.create-item-dialog-dates {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.create-item-dialog-dates > div {
+  flex: 1;
+}
+
+/* Ensure date inputs align properly */
+.create-item-dialog-dates input[type="date"] {
+  width: 100%;
+  min-height: 40px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Smooth transitions for dialog content */
+.create-item-dialog * {
+  transition: all 0.15s ease;
+}
