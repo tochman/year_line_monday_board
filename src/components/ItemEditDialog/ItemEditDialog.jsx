@@ -143,12 +143,14 @@ const ItemEditDialog = ({
 
   return (
     <Box
+      ref={dialogRef}
       style={{
         position: 'fixed',
-        left: position.x + 10,
-        top: position.y + 10,
+        left: dialogPos.x,
+        top: dialogPos.y,
         zIndex: 10000,
         pointerEvents: 'auto',
+        userSelect: isDragging ? 'none' : 'auto',
       }}
       onClick={(e) => e.stopPropagation()}
       border
@@ -157,15 +159,35 @@ const ItemEditDialog = ({
       padding="medium"
       className="item-edit-dialog"
     >
-      {/* Header */}
-      <Flex justify="space-between" align="center" style={{ marginBottom: '12px' }}>
-        <Text type="text1" weight="bold">Edit Item</Text>
+      {/* Draggable Header */}
+      <Flex 
+        justify="space-between" 
+        align="center" 
+        style={{ 
+          marginBottom: '12px',
+          cursor: 'move',
+          padding: '4px 0',
+          borderBottom: '1px solid var(--ui-border-color)',
+          marginLeft: '-16px',
+          marginRight: '-16px',
+          marginTop: '-8px',
+          paddingLeft: '16px',
+          paddingRight: '8px',
+          paddingBottom: '12px',
+        }}
+        onMouseDown={handleDragStart}
+      >
+        <Flex align="center" gap="small">
+          <Drag style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+          <Text type="text1" weight="bold">Edit Item</Text>
+        </Flex>
         <IconButton
           icon={Close}
           size="xs"
           kind="tertiary"
           ariaLabel="Close"
           onClick={handleCancel}
+          onMouseDown={(e) => e.stopPropagation()}
         />
       </Flex>
 
