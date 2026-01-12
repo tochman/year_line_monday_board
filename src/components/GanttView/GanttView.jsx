@@ -400,6 +400,54 @@ const GanttView = ({
       console.error('❌ Error updating item:', err);
     }
   };
+
+  // Handle drag/drop updates from timeline (optimistic)
+  const handleDragDropUpdate = async (updatedItem) => {
+    console.log('🎯 Handling drag/drop update:', updatedItem);
+
+    // Set flag to skip next board refetch (optimistic update)
+    window.__skipNextBoardRefetch = true;
+
+    try {
+      // Check if dates changed
+      const originalItem = allItems.find(i => i.id === updatedItem.id);
+      if (!originalItem) {
+        console.error('Original item not found for drag update');
+        return;
+      }
+
+      const datesChanged = updatedItem.startDate !== originalItem.startDate || updatedItem.endDate !== originalItem.endDate;
+      const groupChanged = updatedItem.groupId !== originalItem.group?.id;
+
+      // Update dates if changed
+      if (datesChanged && onUpdateItem) {
+        await onUpdateItem({
+          ...originalItem,
+          startDate: updatedItem.startDate,
+          endDate: updatedItem.endDate
+        });
+        console.log('✅ Dates updated via drag');
+      }
+
+      // Update group if changed
+      if (groupChanged && updateItemGroup) {
+        await updateItemGroup(updatedItem.id, updatedItem.groupId);
+        console.log('✅ Group updated via drag');
+      }
+
+      console.log('✅ Drag/drop update complete');
+    } catch (err) {
+      console.error('❌ Error in drag/drop update:', err);
+      // On error, force a refetch to restore correct state
+      delete window.__skipNextBoardRefetch;
+      window.location.reload();
+    } finally {
+      // Clear the flag after a short delay
+      setTimeout(() => {
+        delete window.__skipNextBoardRefetch;
+      }, 500);
+    }
+  };
   
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: themeColors.primaryBackground }}>
@@ -544,6 +592,7 @@ const GanttView = ({
           colorTheme={colorTheme}
           themeColors={themeColors}
           onItemClick={handleBarClick}
+          onItemUpdate={handleDragDropUpdate}
           onHeaderScroll={(scrollLeft) => {
             if (timelineHeaderRef.current) {
               timelineHeaderRef.current.scrollLeft = scrollLeft;
