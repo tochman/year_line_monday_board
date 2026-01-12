@@ -43,6 +43,7 @@ const GanttView = ({
   // View state
   const [yearFilter, setYearFilter] = useState('all');
   const [groupBy, setGroupBy] = useState('groups'); // 'groups' or 'status'
+  const [userFilter, setUserFilter] = useState('all'); // 'all' or user ID
   const [expandedGroups, setExpandedGroups] = useState({});
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [colorTheme, setColorTheme] = useState('monday');
@@ -97,6 +98,7 @@ const GanttView = ({
     groups,
     yearFilter,
     groupBy,
+    userFilter,
   });
   
   // Constants for row heights - must match both panes
@@ -317,16 +319,7 @@ const GanttView = ({
   const handleRowItemClick = (item, event) => {
     setSelectedItemId(item.id);
     
-    // Open edit dialog
-    if (event) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      setDialogPosition({
-        x: rect.right,
-        y: rect.top
-      });
-      setEditingItem(item);
-    }
-    
+    // Scroll horizontally to center the timeline bar
     if (timelineScrollRef.current && item.startDate) {
       const scrollContainer = timelineScrollRef.current;
       const itemStartX = timeScale.dateToX(new Date(item.startDate));
@@ -340,16 +333,39 @@ const GanttView = ({
         behavior: 'smooth'
       });
     }
+    
+    // Scroll vertically to center the item
+    if (scrollContainerRef.current && event) {
+      const mainScrollContainer = scrollContainerRef.current;
+      const clickedElement = event.currentTarget;
+      const containerRect = mainScrollContainer.getBoundingClientRect();
+      const elementRect = clickedElement.getBoundingClientRect();
+      
+      // Calculate position to center the item vertically
+      const elementTop = elementRect.top - containerRect.top + mainScrollContainer.scrollTop;
+      const elementHeight = elementRect.height;
+      const containerHeight = containerRect.height;
+      const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+      
+      mainScrollContainer.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth'
+      });
+    }
   };
   
   const handleBarClick = (item, event) => {
     setSelectedItemId(item.id);
     
-    // Open edit dialog at click position
+    // Open edit dialog at bar position
     if (event) {
+      // Get the position relative to the viewport
+      const rect = event.currentTarget?.getBoundingClientRect?.() || 
+                   { left: event.clientX, top: event.clientY, right: event.clientX + 200 };
+      
       setDialogPosition({
-        x: event.clientX,
-        y: event.clientY
+        x: rect.right || rect.left + 200,
+        y: rect.top || event.clientY
       });
       setEditingItem(item);
     }
@@ -453,11 +469,14 @@ const GanttView = ({
         yearFilter={yearFilter}
         availableYears={availableYears}
         groupBy={groupBy}
+        userFilter={userFilter}
+        users={users}
         zoomLevel={zoomLevel}
         colorTheme={colorTheme}
         themeColors={themeColors}
         onYearChange={handleYearChange}
         onGroupByChange={setGroupBy}
+        onUserFilterChange={setUserFilter}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onTodayClick={handleTodayClick}

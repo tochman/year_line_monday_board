@@ -9,7 +9,7 @@ import "@vibe/core/tokens";
 import { Text, Box } from "@vibe/core";
 
 import GanttView from "./components/GanttView";
-import WheelLoader from "./components/WheelLoader";
+import TimelineLoader from "./components/TimelineLoader";
 import useMondayBoard from "./hooks/useMondayBoard";
 
 const monday = mondaySdk();
@@ -95,7 +95,7 @@ const App = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <WheelLoader />
+        <TimelineLoader size="lg" />
       </div>
     );
   }

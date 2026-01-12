@@ -12,6 +12,7 @@ import { useMemo } from 'react';
  * @param {Array} groups - Monday.com groups
  * @param {string} yearFilter - 'all' or specific year
  * @param {string} groupBy - 'groups' or 'status'
+ * @param {string} userFilter - 'all' or user ID
  * @returns {Object} { groupedItems, allItems, availableYears }
  */
 export const useMondayGanttData = ({
@@ -19,6 +20,7 @@ export const useMondayGanttData = ({
   groups = [],
   yearFilter,
   groupBy = 'groups',
+  userFilter = 'all',
 }) => {
   // Transform Monday items to extract dates and status from column_values
   const transformedItems = useMemo(() => {
@@ -27,8 +29,9 @@ export const useMondayGanttData = ({
       let endDate = null;
       let status = null;
       let statusLabel = 'No Status';
+      let assignedUserIds = [];
       
-      // Parse column_values to find dates and status
+      // Parse column_values to find dates, status, and assigned users
       item.column_values?.forEach(col => {
         if (!col.value) return;
         
@@ -52,6 +55,16 @@ export const useMondayGanttData = ({
               status = statusData.index || statusData.label || statusData.text;
               statusLabel = statusData.label || statusData.text || 'Unknown';
             }
+          } else if (col.type === 'people' || col.type === 'person') {
+            // Parse people column
+            const peopleData = JSON.parse(col.value);
+            if (peopleData.personsAndTeams) {
+              peopleData.personsAndTeams.forEach(person => {
+                if (person.id && person.kind === 'person') {
+                  assignedUserIds.push(person.id);
+                }
+              });
+            }
           }
         } catch (err) {
           // Skip invalid JSON
@@ -64,6 +77,7 @@ export const useMondayGanttData = ({
         endDate: endDate || startDate,
         status,
         statusLabel,
+        assignedUserIds,
       };
     }).filter(item => item.startDate); // Only include items with dates
   }, [items]);
@@ -83,7 +97,7 @@ export const useMondayGanttData = ({
   }, [transformedItems]);
 
   // Filter items based on yearFilter
-  const filteredItems = useMemo(() => {
+  const yearFilteredItems = useMemo(() => {
     if (yearFilter === 'all') {
       return transformedItems;
     }
@@ -98,6 +112,18 @@ export const useMondayGanttData = ({
       return startYear <= filterYear && endYear >= filterYear;
     });
   }, [transformedItems, yearFilter]);
+  
+  // Filter items based on userFilter
+  const filteredItems = useMemo(() => {
+    if (userFilter === 'all') {
+      return yearFilteredItems;
+    }
+    
+    return yearFilteredItems.filter(item => {
+      // Include items assigned to the selected user
+      return item.assignedUserIds && item.assignedUserIds.includes(parseInt(userFilter, 10));
+    });
+  }, [yearFilteredItems, userFilter]);
 
   // Group items by Monday group or status
   const groupedItems = useMemo(() => {

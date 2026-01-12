@@ -5,11 +5,6 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 
-  hostname: window.location.hostname, 
-  pathname: window.location.pathname,
-  ancestorOrigins: window.location.ancestorOrigins?.length 
-});
-
 // Error boundary to catch any React errors
 class ErrorBoundary extends React.Component {
   constructor(props) {

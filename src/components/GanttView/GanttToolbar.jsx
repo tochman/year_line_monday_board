@@ -16,11 +16,14 @@ const GanttToolbar = ({
   yearFilter,
   availableYears,
   groupBy,
+  userFilter,
+  users = [],
   zoomLevel,
   colorTheme = 'monday',
   themeColors,
   onYearChange,
   onGroupByChange,
+  onUserFilterChange,
   onZoomIn,
   onZoomOut,
   onTodayClick,
@@ -34,6 +37,11 @@ const GanttToolbar = ({
   const groupByOptions = [
     { value: 'groups', label: 'Groups' },
     { value: 'status', label: 'Status' }
+  ];
+  
+  const userOptions = [
+    { value: 'all', label: 'All Members' },
+    ...users.map(user => ({ value: String(user.id), label: user.name }))
   ];
 
   const zoomLevels = {
@@ -83,6 +91,17 @@ const GanttToolbar = ({
               options={groupByOptions}
               value={groupByOptions.find(opt => opt.value === groupBy)}
               onChange={(option) => onGroupByChange(option?.value)}
+              size="medium"
+              clearable={false}
+            />
+          </div>
+          
+          <div style={{ minWidth: '160px' }}>
+            <Dropdown
+              placeholder="Filter by member"
+              options={userOptions}
+              value={userOptions.find(opt => opt.value === userFilter)}
+              onChange={(option) => onUserFilterChange?.(option?.value)}
               size="medium"
               clearable={false}
             />

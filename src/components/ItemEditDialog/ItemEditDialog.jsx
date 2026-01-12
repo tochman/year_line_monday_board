@@ -47,14 +47,6 @@ const ItemEditDialog = ({
   if (!item || !position) return null;
 
   const handleSave = async () => {
-      id: item.id,
-      name: editedName,
-      startDate: editedStartDate,
-      endDate: editedEndDate || null,
-      groupId: editedGroupId,
-      userIds: editedUserIds,
-    });
-
     await onUpdate?.({
       id: item.id,
       name: editedName,

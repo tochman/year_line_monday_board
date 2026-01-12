@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="512" cy="512" r="480"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="512" cy="512" r="480" fill="#ffffff"/>
+  
+  <!-- Clipped content -->
+  <g clip-path="url(#circleClip)">
+    <!-- Left sidebar -->
+    <rect x="32" y="32" width="180" height="960" fill="#f8fafc"/>
+    <line x1="212" y1="32" x2="212" y2="992" stroke="#e2e8f0" stroke-width="2"/>
+    
+    <!-- Header row -->
+    <rect x="32" y="32" width="960" height="90" fill="#f1f5f9"/>
+    <line x1="32" y1="122" x2="992" y2="122" stroke="#e2e8f0" stroke-width="2"/>
+    
+    <!-- Header time markers -->
+    <line x1="380" y1="32" x2="380" y2="122" stroke="#cbd5e1" stroke-width="2"/>
+    <line x1="540" y1="32" x2="540" y2="122" stroke="#cbd5e1" stroke-width="2"/>
+    <line x1="700" y1="32" x2="700" y2="122" stroke="#cbd5e1" stroke-width="2"/>
+    <line x1="860" y1="32" x2="860" y2="122" stroke="#cbd5e1" stroke-width="2"/>
+    
+    <!-- Vertical grid lines -->
+    <line x1="380" y1="122" x2="380" y2="992" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="540" y1="122" x2="540" y2="992" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="700" y1="122" x2="700" y2="992" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="860" y1="122" x2="860" y2="992" stroke="#f1f5f9" stroke-width="2"/>
+    
+    <!-- Row separators -->
+    <line x1="212" y1="252" x2="992" y2="252" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="212" y1="382" x2="992" y2="382" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="212" y1="512" x2="992" y2="512" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="212" y1="642" x2="992" y2="642" stroke="#f1f5f9" stroke-width="2"/>
+    <line x1="212" y1="772" x2="992" y2="772" stroke="#f1f5f9" stroke-width="2"/>
+    
+    <!-- Sidebar row labels -->
+    <rect x="55" y="170" width="130" height="22" rx="4" fill="#e2e8f0"/>
+    <rect x="55" y="300" width="110" height="22" rx="4" fill="#e2e8f0"/>
+    <rect x="55" y="430" width="120" height="22" rx="4" fill="#e2e8f0"/>
+    <rect x="55" y="560" width="100" height="22" rx="4" fill="#e2e8f0"/>
+    <rect x="55" y="690" width="130" height="22" rx="4" fill="#e2e8f0"/>
+    <rect x="55" y="820" width="90" height="22" rx="4" fill="#e2e8f0"/>
+    
+    <!-- Gantt bars - Row 1 -->
+    <rect x="250" y="160" width="260" height="42" rx="21" fill="#ec4899"/>
+    
+    <!-- Gantt bars - Row 2 -->
+    <rect x="340" y="290" width="300" height="42" rx="21" fill="#3b82f6"/>
+    
+    <!-- Gantt bars - Row 3 -->
+    <rect x="280" y="420" width="180" height="42" rx="21" fill="#10b981"/>
+    <rect x="500" y="420" width="200" height="42" rx="21" fill="#8b5cf6"/>
+    
+    <!-- Gantt bars - Row 4 -->
+    <rect x="400" y="550" width="320" height="42" rx="21" fill="#f97316"/>
+    
+    <!-- Gantt bars - Row 5 -->
+    <rect x="260" y="680" width="220" height="42" rx="21" fill="#06b6d4"/>
+    <rect x="520" y="680" width="240" height="42" rx="21" fill="#ec4899"/>
+    
+    <!-- Gantt bars - Row 6 -->
+    <rect x="320" y="810" width="280" height="42" rx="21" fill="#3b82f6"/>
+    
+    <!-- Today marker line -->
+    <line x1="480" y1="122" x2="480" y2="992" stroke="#ef4444" stroke-width="4" stroke-dasharray="12 6"/>
+    <circle cx="480" cy="122" r="10" fill="#ef4444"/>
+  </g>
+  
+  <!-- Circle border -->
+  <circle cx="512" cy="512" r="480" fill="none" stroke="#e2e8f0" stroke-width="6"/>
+</svg>

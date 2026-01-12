@@ -1,0 +1,31 @@
+.timeline-loader {
+  display: inline-block;
+}
+
+/* Size variations */
+.timeline-loader-sm {
+  width: 4.5rem;
+  height: 3rem;
+}
+
+.timeline-loader-md {
+  width: 7.5rem;
+  height: 5rem;
+}
+
+.timeline-loader-lg {
+  width: 12rem;
+  height: 8rem;
+}
+
+.timeline-loader-xl {
+  width: 18rem;
+  height: 12rem;
+}
+
+.timeline-loader-svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
