@@ -175,7 +175,7 @@ const GanttTimelinePane = ({
     } else if (dragState.mode === 'resize-start') {
       // Only change start date using milliseconds
       newStartDate = new Date(dragState.originalStartDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
-      newEndDate = new Date(dragState.originalEndDate);
+      newEndDate = new Date(dragState.originalEndDate.getTime());
       
       // Ensure start date doesn't go past end date (keep at least 1 day duration)
       if (newStartDate.getTime() >= newEndDate.getTime()) {
@@ -183,18 +183,31 @@ const GanttTimelinePane = ({
       }
     } else if (dragState.mode === 'resize-end') {
       // Only change end date using milliseconds
-      newStartDate = new Date(dragState.originalStartDate);
+      newStartDate = new Date(dragState.originalStartDate.getTime());
       newEndDate = new Date(dragState.originalEndDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
       
       // Ensure end date doesn't go before start date (keep at least 1 day duration)
       if (newEndDate.getTime() <= newStartDate.getTime()) {
         newEndDate = new Date(newStartDate.getTime() + 24 * 60 * 60 * 1000);
       }
+    } else {
+      // Fallback - shouldn't happen but prevents undefined dates
+      console.warn('Unknown drag mode:', dragState.mode);
+      newStartDate = new Date(dragState.originalStartDate.getTime());
+      newEndDate = new Date(dragState.originalEndDate.getTime());
     }
     
     // Validate dates before updating state
     if (!newStartDate || !newEndDate || isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
-      console.warn('Invalid dates calculated during drag, skipping update');
+      console.error('Invalid dates calculated during drag:', {
+        mode: dragState.mode,
+        deltaDays,
+        deltaX,
+        originalStart: dragState.originalStartDate,
+        originalEnd: dragState.originalEndDate,
+        newStartDate,
+        newEndDate
+      });
       return;
     }
     
