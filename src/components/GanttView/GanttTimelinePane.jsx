@@ -160,13 +160,12 @@ const GanttTimelinePane = ({
     // Convert pixel delta to days
     const deltaDays = Math.round(deltaX / (timeScale.containerWidth / ((timeScale.viewEnd - timeScale.viewStart) / (1000 * 60 * 60 * 24))));
     
-    let newStartDate = new Date(dragState.originalStartDate);
-    let newEndDate = new Date(dragState.originalEndDate);
+    let newStartDate, newEndDate;
     
     if (dragState.mode === 'move') {
-      // Move both dates by same amount
-      newStartDate.setDate(newStartDate.getDate() + deltaDays);
-      newEndDate.setDate(newEndDate.getDate() + deltaDays);
+      // Move both dates by same amount using milliseconds for accuracy
+      newStartDate = new Date(dragState.originalStartDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+      newEndDate = new Date(dragState.originalEndDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
       
       // Detect target group from Y position
       const targetGroup = getGroupAtY(mouseY + scrollContainerRef.current.scrollTop);
@@ -174,19 +173,29 @@ const GanttTimelinePane = ({
         setDragState(prev => ({ ...prev, targetGroupId: targetGroup }));
       }
     } else if (dragState.mode === 'resize-start') {
-      // Only change start date, but don't go past end date
-      newStartDate.setDate(newStartDate.getDate() + deltaDays);
-      if (newStartDate >= newEndDate) {
-        newStartDate = new Date(newEndDate);
-        newStartDate.setDate(newStartDate.getDate() - 1);
+      // Only change start date using milliseconds
+      newStartDate = new Date(dragState.originalStartDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+      newEndDate = new Date(dragState.originalEndDate);
+      
+      // Ensure start date doesn't go past end date (keep at least 1 day duration)
+      if (newStartDate.getTime() >= newEndDate.getTime()) {
+        newStartDate = new Date(newEndDate.getTime() - 24 * 60 * 60 * 1000);
       }
     } else if (dragState.mode === 'resize-end') {
-      // Only change end date, but don't go before start date
-      newEndDate.setDate(newEndDate.getDate() + deltaDays);
-      if (newEndDate <= newStartDate) {
-        newEndDate = new Date(newStartDate);
-        newEndDate.setDate(newEndDate.getDate() + 1);
+      // Only change end date using milliseconds
+      newStartDate = new Date(dragState.originalStartDate);
+      newEndDate = new Date(dragState.originalEndDate.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+      
+      // Ensure end date doesn't go before start date (keep at least 1 day duration)
+      if (newEndDate.getTime() <= newStartDate.getTime()) {
+        newEndDate = new Date(newStartDate.getTime() + 24 * 60 * 60 * 1000);
       }
+    }
+    
+    // Validate dates before updating state
+    if (!newStartDate || !newEndDate || isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
+      console.warn('Invalid dates calculated during drag, skipping update');
+      return;
     }
     
     setDragState(prev => ({
@@ -219,6 +228,13 @@ const GanttTimelinePane = ({
     const groupChanged = targetGroupId !== originalGroupId;
     
     if (startChanged || endChanged || groupChanged) {
+      // Validate dates before formatting
+      if (!currentStartDate || !currentEndDate || isNaN(currentStartDate.getTime()) || isNaN(currentEndDate.getTime())) {
+        console.error('Invalid dates at drag end, skipping update');
+        setDragState(null);
+        return;
+      }
+      
       // Format dates as ISO strings (date only)
       const formatDate = (d) => d.toISOString().split('T')[0];
       
@@ -352,8 +368,9 @@ const GanttTimelinePane = ({
           const isBeingDragged = dragState && dragState.item.id === item.id;
           const isHovered = hoveredBarId === item.id;
           
-          // If dragging, show ghost bar at original position
+          // If dragging, render ghost + preview bars
           if (isBeingDragged) {
+            // Ghost bar at original position
             bars.push(
               <g key={`${item.id}-ghost`}>
                 <rect
@@ -368,156 +385,127 @@ const GanttTimelinePane = ({
                   stroke="none"
                   style={{ pointerEvents: 'none' }}
                 />
+                <text
+                  x={startX + 14}
+                  y={y + 16}
+                  fontSize="12"
+                  fill="white"
+                  opacity={0.5}
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                >
+                  {item.name.length > 25 ? item.name.slice(0, 25) + '...' : item.name}
+                </text>
+              </g>
+            );
+            
+            // Preview bar at new position
+            const { currentStartDate, currentEndDate } = dragState;
+            if (currentStartDate && currentEndDate && !isNaN(currentStartDate.getTime()) && !isNaN(currentEndDate.getTime())) {
+              const previewStartX = timeScale.dateToX(currentStartDate);
+              const previewEndX = timeScale.dateToX(currentEndDate);
+              const previewWidth = Math.max(previewEndX - previewStartX, 20);
+              
+              bars.push(
+                <g key={`${item.id}-preview`}>
+                  <rect
+                    x={previewStartX}
+                    y={y}
+                    width={previewWidth}
+                    height={24}
+                    rx={12}
+                    ry={12}
+                    fill={color}
+                    opacity={0.85}
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <text
+                    x={previewStartX + 14}
+                    y={y + 16}
+                    fontSize="12"
+                    fill="white"
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  >
+                    {item.name.length > 25 ? item.name.slice(0, 25) + '...' : item.name}
+                  </text>
+                </g>
+              );
+            }
+          } else {
+            // Normal bar rendering when not dragging
+            const cursorStyle = isHovered ? 'move' : 'pointer';
+            
+            bars.push(
+              <g 
+                key={item.id}
+                onMouseDown={(e) => {
+                  handleBarMouseDown(e, item, startX, width, groupId);
+                }}
+                onMouseEnter={() => setHoveredBarId(item.id)}
+                onMouseLeave={() => setHoveredBarId(null)}
+                style={{ cursor: cursorStyle }}
+              >
+                {/* Bar background (rounded pill) */}
+                <rect
+                  x={startX}
+                  y={y}
+                  width={width}
+                  height={24}
+                  rx={12}
+                  ry={12}
+                  fill={color}
+                  opacity={isSelected ? 1 : 0.9}
+                  stroke={isSelected ? '#3B82F6' : 'none'}
+                  strokeWidth={isSelected ? 2 : 0}
+                />
+                
+                {/* Resize handles on hover */}
+                {isHovered && (
+                  <>
+                    <rect
+                      x={startX}
+                      y={y}
+                      width={10}
+                      height={24}
+                      fill="white"
+                      opacity={0.3}
+                      rx={12}
+                      style={{ cursor: 'ew-resize' }}
+                    />
+                    <rect
+                      x={startX + width - 10}
+                      y={y}
+                      width={10}
+                      height={24}
+                      fill="white"
+                      opacity={0.3}
+                      rx={12}
+                      style={{ cursor: 'ew-resize' }}
+                    />
+                  </>
+                )}
+                
+                {/* Item name text */}
+                <text
+                  x={startX + 14}
+                  y={y + 16}
+                  fontSize="12"
+                  fill="white"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                >
+                  {item.name.length > 25 ? item.name.slice(0, 25) + '...' : item.name}
+                </text>
               </g>
             );
           }
-          
-          // Determine cursor based on hover position
-          let cursorStyle = 'pointer';
-          if (isHovered && !dragState) {
-            const rect = scrollContainerRef.current?.getBoundingClientRect();
-            if (rect) {
-              // This will be updated on mouse move
-              cursorStyle = 'move';
-            }
-          }
-          
-          bars.push(
-            <g 
-              key={item.id}
-              onMouseDown={(e) => {
-                handleBarMouseDown(e, item, startX, width, groupId);
-              }}
-              onMouseEnter={() => setHoveredBarId(item.id)}
-              onMouseLeave={() => setHoveredBarId(null)}
-              style={{ cursor: cursorStyle, pointerEvents: isBeingDragged ? 'none' : 'auto' }}
-            >
-              {/* Bar background (rounded pill) */}
-              <rect
-                x={startX}
-                y={y}
-                width={width}
-                height={24}
-                rx={12}
-                ry={12}
-                fill={color}
-                opacity={isBeingDragged ? 0.5 : isSelected ? 1 : 0.9}
-                stroke={isSelected ? '#3B82F6' : 'none'}
-                strokeWidth={isSelected ? 2 : 0}
-              />
-              
-              {/* Resize handles on hover */}
-              {isHovered && !dragState && (
-                <>
-                  <rect
-                    x={startX}
-                    y={y}
-                    width={10}
-                    height={24}
-                    fill="white"
-                    opacity={0.3}
-                    rx={12}
-                    style={{ cursor: 'ew-resize' }}
-                  />
-                  <rect
-                    x={startX + width - 10}
-                    y={y}
-                    width={10}
-                    height={24}
-                    fill="white"
-                    opacity={0.3}
-                    rx={12}
-                    style={{ cursor: 'ew-resize' }}
-                  />
-                </>
-              )}
-              
-              {/* Item name text */}
-              <text
-                x={startX + 14}
-                y={y + 16}
-                fontSize="12"
-                fill="white"
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
-              >
-                {item.name.length > 25 ? item.name.slice(0, 25) + '...' : item.name}
-              </text>
-            </g>
-          );
         });
         
         // Advance Y position by height of all items in this group
         currentY += items.length * ITEM_ROW_HEIGHT;
       }
     });
-    
-    // Render preview bar if dragging
-    if (dragState) {
-      const { item, currentStartDate, currentEndDate, targetGroupId, mode } = dragState;
-      
-      // Calculate preview position
-      const previewStartX = timeScale.dateToX(currentStartDate);
-      const previewEndX = timeScale.dateToX(currentEndDate);
-      const previewWidth = Math.max(previewEndX - previewStartX, 20);
-      
-      // Calculate Y position for target group and find group index for color
-      let previewY = 0;
-      let targetGroupIndex = 0;
-      const groupEntries = Object.entries(groupedItems);
-      
-      for (let i = 0; i < groupEntries.length; i++) {
-        const [gId, items] = groupEntries[i];
-        if (gId === targetGroupId) {
-          targetGroupIndex = i;
-          previewY += GROUP_HEADER_HEIGHT;
-          
-          // Find item index in target group to determine Y
-          const itemIndex = items.findIndex(it => it.id === item.id);
-          if (itemIndex >= 0) {
-            previewY += itemIndex * ITEM_ROW_HEIGHT;
-          }
-          break;
-        }
-        previewY += GROUP_HEADER_HEIGHT;
-        if (expandedGroups[gId]) {
-          previewY += items.length * ITEM_ROW_HEIGHT;
-        }
-      }
-      
-      // Use the same color as the original bar (based on group index)
-      const color = getGroupColor(targetGroupIndex);
-      
-      // Offset within row
-      const previewBarY = previewY + (ITEM_ROW_HEIGHT - 24) / 2;
-      
-      bars.push(
-        <g key="drag-preview">
-          <rect
-            x={previewStartX}
-            y={previewBarY}
-            width={previewWidth}
-            height={24}
-            rx={12}
-            ry={12}
-            fill={color}
-            opacity={0.8}
-            stroke="#3B82F6"
-            strokeWidth={2}
-            strokeDasharray="5,5"
-            style={{ pointerEvents: 'none' }}
-          />
-          <text
-            x={previewStartX + 14}
-            y={previewBarY + 16}
-            fontSize="12"
-            fill="white"
-            style={{ pointerEvents: 'none', userSelect: 'none' }}
-          >
-            {item.name.length > 25 ? item.name.slice(0, 25) + '...' : item.name}
-          </text>
-        </g>
-      );
-    }
     
     return bars;
   };
