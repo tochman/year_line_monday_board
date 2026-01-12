@@ -44,7 +44,6 @@ const App = () => {
   // Apply Monday.com theme class to body - THIS IS WHAT MAKES CSS VARIABLES WORK
   useEffect(() => {
     const theme = context?.theme || 'light';
-    console.log('🎨 Monday theme from context:', theme);
     setMondayTheme(theme);
     
     // Remove any existing theme classes
@@ -59,12 +58,11 @@ const App = () => {
     
     // Add current theme class - this triggers CSS variables from @vibe/core/tokens
     document.body.classList.add(`${theme}-app-theme`);
-    console.log('🎨 Applied body class:', `${theme}-app-theme`);
   }, [context?.theme]);
 
   // Notify Monday that user has value
   useEffect(() => {
-    console.log('✅ Executing valueCreatedForUser');
+
     monday.execute("valueCreatedForUser");
   }, []);
 

@@ -107,7 +107,6 @@ const GanttToolbar = ({
             options={themeOptions}
             value={themeOptions.find(opt => opt.value === colorTheme)}
             onChange={(option) => {
-              console.log('🎨 Color theme changed:', option);
               onColorThemeChange?.(option?.value);
             }}
             size="medium"
@@ -119,7 +118,6 @@ const GanttToolbar = ({
         <Flex gap="xs" align="center">
           <Button
             onClick={() => {
-              console.log('🔍 Zoom out clicked');
               onZoomOut();
             }}
             disabled={zoomLevel === 'month'}
@@ -143,7 +141,6 @@ const GanttToolbar = ({
           </span>
           <Button
             onClick={() => {
-              console.log('🔍 Zoom in clicked');
               onZoomIn();
             }}
             disabled={zoomLevel === 'day'}

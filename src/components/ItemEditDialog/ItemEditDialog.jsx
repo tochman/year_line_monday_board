@@ -47,7 +47,6 @@ const ItemEditDialog = ({
   if (!item || !position) return null;
 
   const handleSave = async () => {
-    console.log('💾 Saving item changes:', {
       id: item.id,
       name: editedName,
       startDate: editedStartDate,

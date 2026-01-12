@@ -131,7 +131,6 @@ const generateMockItems = () => {
     });
   }
   
-  console.log(`📦 Generated ${items.length} mock items in ${year}, group: ${group.title}`);
   return items;
 };
 
@@ -163,7 +162,6 @@ export const useMondayBoard = () => {
   useEffect(() => {
     // Check for viewer simulation in development (highest priority)
     if (isDevelopment && import.meta.env.VITE_SIMULATE_VIEWER === 'true') {
-      console.log('🧪 Simulating viewer mode (VITE_SIMULATE_VIEWER=true)');
       setIsViewerUser(true);
       setError("viewer_access");
       setLoading(false);
@@ -189,31 +187,25 @@ export const useMondayBoard = () => {
 
   // Initialize context listener
   useEffect(() => {
-    console.log('🔧 Initializing useMondayBoard hook', { useMockData, isViewerUser });
     
     // Load mock data if env var is set
     if (useMockData) {
-      console.log('📦 Using mock data mode');
       loadMockData();
       return;
     }
     
     // Skip initialization if user is a viewer
     if (isViewerUser) {
-      console.log('👁️ User is viewer, skipping initialization');
       return;
     }
     
     let currentBoardId = null;
     
     // Get initial context (important for theme and board ID on first load)
-    console.log('🔍 Fetching initial context from Monday.com');
     monday.get("context").then((res) => {
-      console.log('📥 Received context:', res.data);
       if (res.data) {
         setContext(res.data);
         currentBoardId = res.data?.boardId || res.data?.boardIds?.[0];
-        console.log('🎯 Board ID:', currentBoardId);
       }
     }).catch(err => {
       console.error('❌ Error getting context:', err);
@@ -221,10 +213,8 @@ export const useMondayBoard = () => {
     
     // Listen for context changes (theme changes, board switches, etc.)
     monday.listen("context", (res) => {
-      console.log('🔄 Context changed:', res.data);
       setContext(res.data);
       currentBoardId = res.data?.boardId || res.data?.boardIds?.[0];
-      console.log('🎯 Updated board ID:', currentBoardId);
     });
     
     monday.listen("settings", (res) => {
@@ -257,14 +247,10 @@ export const useMondayBoard = () => {
 
   // Load mock data for development
   const loadMockData = () => {
-    console.log('🎭 Generating mock data...');
     const mockItems = generateMockItems();
-    console.log(`📦 Loading ${mockItems.length} mock items`);
-    console.log('📋 Mock items sample:', mockItems.slice(0, 2));
     
     setColumns(MOCK_COLUMNS);
     setGroups(MOCK_GROUPS);
-    console.log('📁 Mock groups:', MOCK_GROUPS);
     setItems(mockItems);
     setBoardData({ id: "mock-board", name: "Development Board" });
     setSettings(prev => ({
@@ -273,7 +259,6 @@ export const useMondayBoard = () => {
       statusColumn: "status"
     }));
     setLoading(false);
-    console.log('✅ Mock data loaded successfully');
   };
 
   // Fetch board data when context is available
@@ -336,13 +321,11 @@ export const useMondayBoard = () => {
    * Fetch board structure and items
    */
   const fetchBoardData = async (boardId) => {
-    console.log('🔄 Fetching board data for boardId:', boardId);
     setLoading(true);
     setError(null);
     
     try {
       // First, get board structure (columns, groups)
-      console.log('📡 Sending GraphQL query for board structure...');
       const boardQuery = `
         query ($boardId: [ID!]) {
           boards(ids: $boardId) {
@@ -367,7 +350,6 @@ export const useMondayBoard = () => {
         variables: { boardId: [boardId] }
       });
       
-      console.log('📥 Board response:', boardResponse);
       
       // Check for GraphQL errors that prevent data loading
       if (boardResponse.errors && boardResponse.errors.length > 0) {
@@ -400,9 +382,6 @@ export const useMondayBoard = () => {
       
       if (boardResponse.data?.boards?.[0]) {
         const board = boardResponse.data.boards[0];
-        console.log('✅ Board data received:', { id: board.id, name: board.name, columnsCount: board.columns.length, groupsCount: board.groups.length });
-        console.log('📋 Columns:', board.columns);
-        console.log('📁 Groups:', board.groups);
         
         setBoardData(board);
         setColumns(board.columns);
@@ -416,7 +395,6 @@ export const useMondayBoard = () => {
           
           if (defaultDateCol) {
             setSettings(prev => ({ ...prev, dateColumn: defaultDateCol.id }));
-            console.log(`✓ Auto-selected date column: ${defaultDateCol.title} (${defaultDateCol.type})`);
           }
         }
         
@@ -430,11 +408,9 @@ export const useMondayBoard = () => {
       }
       
       // Fetch users for person column display and filtering
-      console.log('👥 Fetching users...');
       await fetchUsers();
       
       // Now fetch items
-      console.log('📋 Fetching items...');
       await fetchItems(boardId);
       
     } catch (err) {
@@ -460,7 +436,6 @@ export const useMondayBoard = () => {
       }
     } finally {
       setLoading(false);
-      console.log('🏁 fetchBoardData completed');
     }
   };
 
@@ -469,7 +444,6 @@ export const useMondayBoard = () => {
    * Implements cursor-based pagination and rate limit handling
    */
   const fetchItems = async (boardId) => {
-    console.log('📋 Starting fetchItems for boardId:', boardId);
     try {
       let allItems = [];
       let cursor = null;
@@ -479,7 +453,6 @@ export const useMondayBoard = () => {
       
       while (hasMore) {
         pageCount++;
-        console.log(`📄 Fetching page ${pageCount}...`);
         setLoadingProgress(`Loading items (page ${pageCount})...`);
         
         const itemsQuery = `
@@ -520,7 +493,6 @@ export const useMondayBoard = () => {
           const page = itemsResponse.data.boards[0].items_page;
           const items = page.items || [];
           
-          console.log(`📄 Page ${pageCount}: Fetched ${items.length} items, cursor: ${page.cursor ? 'exists' : 'null'}`);
           
           allItems = [...allItems, ...items];
           
@@ -529,7 +501,6 @@ export const useMondayBoard = () => {
           cursor = page.cursor;
           hasMore = !!cursor; // Continue as long as cursor exists
           
-          console.log(`📊 Total items so far: ${allItems.length}, hasMore: ${hasMore}`);
           
           // Respect rate limits: small delay between pages
           if (hasMore) {
@@ -542,9 +513,7 @@ export const useMondayBoard = () => {
       
       setItems(allItems);
       setLoadingProgress(null);
-      console.log(`✅ Successfully loaded ${allItems.length} items from board`);
       if (allItems.length > 0) {
-        console.log('📋 First item sample:', allItems[0]);
       }
     } catch (err) {
       console.error("❌ Error fetching items:", err);
@@ -574,7 +543,6 @@ export const useMondayBoard = () => {
         if (isRateLimit && attempt < maxRetries - 1) {
           // Exponential backoff: 1s, 2s, 4s
           const delay = Math.pow(2, attempt) * 1000;
-          console.log(`Rate limit hit, retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           throw err;
@@ -1344,7 +1312,6 @@ export const useMondayBoard = () => {
    * @returns {Promise<{success: boolean}>}
    */
   const deleteGroup = useCallback(async (groupId) => {
-    console.log('🗑️ Attempting to delete group:', groupId, 'Current groups state:', groups.length, groups);
 
     if (useMockData) {
       // In mock mode, remove from local state
@@ -1383,7 +1350,6 @@ export const useMondayBoard = () => {
       });
 
       const currentGroups = countResult.data?.boards?.[0]?.groups || [];
-      console.log('✅ Current groups from Monday.com:', currentGroups.length, currentGroups);
 
       // Prevent deleting the last group (Monday.com requires at least one group)
       if (currentGroups.length <= 1) {
@@ -1444,7 +1410,6 @@ export const useMondayBoard = () => {
    */
   const createItem = useCallback(async (itemData) => {
     if (useMockData) {
-      console.log('📝 Mock: Creating item', itemData);
       const newItem = {
         id: `mock-${Date.now()}`,
         name: itemData.name,
@@ -1516,7 +1481,6 @@ export const useMondayBoard = () => {
       });
 
       if (response.data?.create_item) {
-        console.log('✅ Item created:', response.data.create_item);
         
         // Trigger Monday.com notice
         monday.execute("notice", {

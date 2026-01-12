@@ -5,8 +5,6 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 
-console.log('🎬 index.jsx loading...');
-console.log('🌍 Environment:', { 
   hostname: window.location.hostname, 
   pathname: window.location.pathname,
   ancestorOrigins: window.location.ancestorOrigins?.length 
@@ -44,25 +42,19 @@ class ErrorBoundary extends React.Component {
 }
 
 try {
-  console.log('🎯 Getting root element...');
   const rootElement = document.getElementById("root");
   if (!rootElement) {
     console.error('❌ Root element not found!');
     throw new Error('Root element #root not found in DOM');
   }
-  console.log('✅ Root element found');
   
-  console.log('🏗️ Creating React root...');
   const root = createRoot(rootElement);
-  console.log('✅ React root created');
   
-  console.log('🎨 Rendering App...');
   root.render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
   );
-  console.log('✅ App rendered');
 } catch (err) {
   console.error('❌ Fatal error in index.jsx:', err);
   document.body.innerHTML = `

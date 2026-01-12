@@ -30,7 +30,6 @@ export const useMondayTheme = () => {
       backgroundHover: computedStyle.getPropertyValue('--primary-background-hover-color').trim() || '#f5f6f8',
     };
     
-    console.log('🎨 Theme colors from CSS variables:', colors);
     setThemeColors(colors);
   }, []);
 
@@ -42,7 +41,6 @@ export const useMondayTheme = () => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          console.log('🔄 Body class changed, updating theme colors...');
           // Small delay to let CSS variables update
           setTimeout(updateThemeColors, 50);
         }
