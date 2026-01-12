@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, TextField, Button, Flex, Text, IconButton, Dropdown } from '@vibe/core';
-import { Close, Calendar } from '@vibe/icons';
+import { Close, Calendar, Drag } from '@vibe/icons';
 
 /**
  * ItemEditDialog Component
@@ -28,6 +28,73 @@ const ItemEditDialog = ({
   const [editedUserIds, setEditedUserIds] = useState(item?.assignedUserIds || []);
   const [editedStatusIndex, setEditedStatusIndex] = useState(item?.statusIndex ?? null);
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Dragging state
+  const [dialogPos, setDialogPos] = useState({ x: position?.x || 0, y: position?.y || 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const dialogRef = useRef(null);
+
+  // Update position when initial position changes (new item clicked)
+  useEffect(() => {
+    if (position) {
+      setDialogPos({ x: position.x, y: position.y });
+    }
+  }, [position?.x, position?.y]);
+
+  // Handle drag start on header
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - dialogPos.x,
+      y: e.clientY - dialogPos.y
+    };
+  }, [dialogPos]);
+
+  // Handle drag move and end
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const newX = e.clientX - dragStartRef.current.x;
+      const newY = e.clientY - dragStartRef.current.y;
+      
+      // Keep dialog within viewport bounds
+      const maxX = window.innerWidth - (dialogRef.current?.offsetWidth || 320);
+      const maxY = window.innerHeight - (dialogRef.current?.offsetHeight || 400);
+      
+      setDialogPos({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  // Reset form when a different item is selected
+  useEffect(() => {
+    if (item) {
+      setEditedName(item.name || '');
+      setEditedStartDate(item.startDate || '');
+      setEditedEndDate(item.endDate || '');
+      setEditedGroupId(item.group?.id || '');
+      setEditedUserIds(item.assignedUserIds || []);
+      setEditedStatusIndex(item.statusIndex ?? null);
+      setHasChanges(false);
+    }
+  }, [item?.id]); // Only reset when the item ID changes
 
   // Track if any field changed
   useEffect(() => {

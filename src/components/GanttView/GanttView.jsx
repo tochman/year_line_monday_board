@@ -381,17 +381,42 @@ const GanttView = ({
   const handleBarClick = (item, event) => {
     setSelectedItemId(item.id);
     
-    // Open edit dialog at bar position
-    if (event) {
-      // Get the position relative to the viewport
-      const rect = event.currentTarget?.getBoundingClientRect?.() || 
-                   { left: event.clientX, top: event.clientY, right: event.clientX + 200 };
+    // Check if dialog is already open - if so, just update immediately
+    const dialogAlreadyOpen = editingItem !== null;
+    
+    // First scroll the item into view (horizontally to center the bar)
+    const scrollContainer = timelineScrollRef.current;
+    if (scrollContainer && timeScale) {
+      const itemStartX = timeScale.dateToX(new Date(item.startDate));
+      const itemEndX = item.endDate ? timeScale.dateToX(new Date(item.endDate)) : itemStartX;
+      const itemCenterX = (itemStartX + itemEndX) / 2;
+      const viewportWidth = scrollContainer.clientWidth;
+      const targetScroll = Math.max(0, itemCenterX - viewportWidth / 2);
       
-      setDialogPosition({
-        x: rect.right || rect.left + 200,
-        y: rect.top || event.clientY
+      scrollContainer.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
       });
+    }
+    
+    // If dialog already open, update immediately; otherwise wait for scroll
+    if (dialogAlreadyOpen) {
       setEditingItem(item);
+    } else {
+      // Open dialog after a short delay to let scrolling complete
+      // Position it in the center of the viewport
+      setTimeout(() => {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const dialogWidth = 320;
+        const dialogHeight = 500;
+        
+        setDialogPosition({
+          x: Math.max(20, (viewportWidth - dialogWidth) / 2),
+          y: Math.max(20, (viewportHeight - dialogHeight) / 2)
+        });
+        setEditingItem(item);
+      }, 350);
     }
   };
 

@@ -80,34 +80,34 @@ function TimelineLoader({ size = 'md', className = '' }) {
         <g clipPath="url(#circleClipLoader)">
           {/* Gantt bars - Row 1 */}
           <g>
-            <rect x="15" y="20" width="50" height="10" rx="5" fill="#ec4899" className="timeline-bar" style={{ '--delay': '0ms' }}/>
-            <rect x="15" y="20" width="50" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '500ms' }}/>
+            <rect x="20" y="28" width="40" height="8" rx="4" fill="#ec4899" className="timeline-bar" style={{ '--delay': '0ms' }}/>
+            <rect x="20" y="28" width="40" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '500ms' }}/>
           </g>
           
           {/* Gantt bars - Row 2 */}
           <g>
-            <rect x="25" y="36" width="60" height="10" rx="5" fill="#3b82f6" className="timeline-bar" style={{ '--delay': '100ms' }}/>
-            <rect x="25" y="36" width="60" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '600ms' }}/>
+            <rect x="28" y="42" width="50" height="8" rx="4" fill="#3b82f6" className="timeline-bar" style={{ '--delay': '100ms' }}/>
+            <rect x="28" y="42" width="50" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '600ms' }}/>
           </g>
           
           {/* Gantt bars - Row 3 */}
           <g>
-            <rect x="18" y="52" width="40" height="10" rx="5" fill="#10b981" className="timeline-bar" style={{ '--delay': '200ms' }}/>
-            <rect x="18" y="52" width="40" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '700ms' }}/>
-            <rect x="63" y="52" width="45" height="10" rx="5" fill="#8b5cf6" className="timeline-bar" style={{ '--delay': '250ms' }}/>
-            <rect x="63" y="52" width="45" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '750ms' }}/>
+            <rect x="22" y="56" width="32" height="8" rx="4" fill="#10b981" className="timeline-bar" style={{ '--delay': '200ms' }}/>
+            <rect x="22" y="56" width="32" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '700ms' }}/>
+            <rect x="58" y="56" width="35" height="8" rx="4" fill="#8b5cf6" className="timeline-bar" style={{ '--delay': '250ms' }}/>
+            <rect x="58" y="56" width="35" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '750ms' }}/>
           </g>
           
           {/* Gantt bars - Row 4 */}
           <g>
-            <rect x="28" y="68" width="55" height="10" rx="5" fill="#f97316" className="timeline-bar" style={{ '--delay': '300ms' }}/>
-            <rect x="28" y="68" width="55" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '800ms' }}/>
+            <rect x="30" y="70" width="45" height="8" rx="4" fill="#f97316" className="timeline-bar" style={{ '--delay': '300ms' }}/>
+            <rect x="30" y="70" width="45" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '800ms' }}/>
           </g>
           
           {/* Gantt bars - Row 5 */}
           <g>
-            <rect x="20" y="84" width="48" height="10" rx="5" fill="#06b6d4" className="timeline-bar" style={{ '--delay': '400ms' }}/>
-            <rect x="20" y="84" width="48" height="10" rx="5" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '900ms' }}/>
+            <rect x="24" y="84" width="38" height="8" rx="4" fill="#06b6d4" className="timeline-bar" style={{ '--delay': '400ms' }}/>
+            <rect x="24" y="84" width="38" height="8" rx="4" fill="url(#shimmer)" className="timeline-bar timeline-bar-shimmer" style={{ '--delay': '900ms' }}/>
           </g>
         </g>
       </svg>
