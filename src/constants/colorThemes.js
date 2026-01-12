@@ -1,5 +1,5 @@
 /**
- * Pre-defined color themes for the Year Wheel
+ * Pre-defined color themes for the Gantt Timeline
  */
 export const COLOR_THEMES = {
   monday: {
