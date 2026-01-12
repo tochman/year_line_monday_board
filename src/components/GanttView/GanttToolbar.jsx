@@ -1,5 +1,6 @@
-import { Add, Remove, Calendar } from "@vibe/icons";
+import { Add, Remove, Calendar, Favorite } from "@vibe/icons";
 import { Button, Dropdown, Flex } from "@vibe/core";
+import { COLOR_THEMES } from '../../constants/colorThemes';
 
 /**
  * GanttToolbar Component
@@ -8,15 +9,19 @@ import { Button, Dropdown, Flex } from "@vibe/core";
  * - Year selection
  * - Today button
  * - Zoom controls
+ * - Color theme selection
  */
 const GanttToolbar = ({
   yearFilter,
   availableYears,
   zoomLevel,
+  colorTheme = 'monday',
+  themeColors,
   onYearChange,
   onZoomIn,
   onZoomOut,
   onTodayClick,
+  onColorThemeChange,
 }) => {
   const yearOptions = [
     { value: 'all', label: 'All Years' },
@@ -29,34 +34,55 @@ const GanttToolbar = ({
     day: 'Day'
   };
   
+  const themeOptions = Object.keys(COLOR_THEMES).map(key => ({
+    value: key,
+    label: COLOR_THEMES[key].name
+  }));
+  
+  console.log('🎛️ Toolbar state:', { 
+    yearFilter, 
+    yearOptionsCount: yearOptions.length,
+    colorTheme, 
+    themeOptionsCount: themeOptions.length,
+    zoomLevel 
+  });
+  
   return (
     <Flex 
       justify="space-between" 
       align="center"
       style={{ 
         padding: '16px 24px', 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #e5e7eb' 
+        backgroundColor: themeColors.primaryBackground, 
+        borderBottom: `1px solid ${themeColors.uiBorder}` 
       }}
     >
       {/* Left: Title and Year selector */}
       <Flex gap="large" align="center">
-        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: themeColors.primaryText }}>
           Gantt Timeline
         </h2>
         
         <Flex gap="medium" align="center">
-          <Dropdown
-            placeholder="Select year"
-            options={yearOptions}
-            value={yearOptions.find(opt => opt.value === yearFilter)}
-            onChange={(option) => onYearChange(option.value)}
-            size="medium"
-            clearable={false}
-          />
+          <div style={{ minWidth: '140px' }}>
+            <Dropdown
+              placeholder="Select year"
+              options={yearOptions}
+              value={yearOptions.find(opt => opt.value === yearFilter)}
+              onChange={(option) => {
+                console.log('📅 Year changed:', option);
+                onYearChange(option?.value);
+              }}
+              size="medium"
+              clearable={false}
+            />
+          </div>
           
           <Button
-            onClick={onTodayClick}
+            onClick={() => {
+              console.log('📍 Today clicked');
+              onTodayClick();
+            }}
             kind="tertiary"
             size="medium"
             leftIcon={Calendar}
@@ -66,12 +92,29 @@ const GanttToolbar = ({
         </Flex>
       </Flex>
       
-      {/* Right: Zoom controls */}
+      {/* Right: Color theme and Zoom controls */}
       <Flex gap="medium" align="center">
-        <span style={{ fontSize: '14px', color: '#6B7280' }}>Zoom:</span>
+        <div style={{ minWidth: '160px' }}>
+          <Dropdown
+            placeholder="Color theme"
+            options={themeOptions}
+            value={themeOptions.find(opt => opt.value === colorTheme)}
+            onChange={(option) => {
+              console.log('🎨 Color theme changed:', option);
+              onColorThemeChange?.(option?.value);
+            }}
+            size="medium"
+            clearable={false}
+          />
+        </div>
+        
+        <span style={{ fontSize: '14px', color: themeColors.secondaryText }}>Zoom:</span>
         <Flex gap="xs" align="center">
           <Button
-            onClick={onZoomOut}
+            onClick={() => {
+              console.log('🔍 Zoom out clicked');
+              onZoomOut();
+            }}
             disabled={zoomLevel === 'month'}
             kind="tertiary"
             size="small"
@@ -83,8 +126,8 @@ const GanttToolbar = ({
             padding: '4px 8px', 
             fontSize: '12px', 
             fontWeight: '500', 
-            color: '#6B7280',
-            backgroundColor: '#F3F4F6',
+            color: themeColors.secondaryText,
+            backgroundColor: themeColors.backgroundHover,
             borderRadius: '4px',
             minWidth: '60px',
             textAlign: 'center'
@@ -92,7 +135,10 @@ const GanttToolbar = ({
             {zoomLevels[zoomLevel]}
           </span>
           <Button
-            onClick={onZoomIn}
+            onClick={() => {
+              console.log('🔍 Zoom in clicked');
+              onZoomIn();
+            }}
             disabled={zoomLevel === 'day'}
             kind="tertiary"
             size="small"

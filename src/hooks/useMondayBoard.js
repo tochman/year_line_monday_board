@@ -63,17 +63,32 @@ const generateMockItems = () => {
     // Create task name with index for uniqueness
     const taskName = `${tasks[i % tasks.length]} #${Math.floor(i / tasks.length) + 1}`;
     
-    // Some items have duration (end date)
-    const hasDuration = Math.random() > 0.6; // 40% have duration
+    // All items have duration with various lengths
     let endDate = null;
-    if (hasDuration) {
-      // Calculate end date carefully to avoid overflow
-      const durationDays = Math.floor(Math.random() * 14) + 3;
-      endDate = new Date(year, month, day + durationDays);
-      // If end date goes into next year, clamp to Dec 31
-      if (endDate.getFullYear() > year) {
-        endDate = new Date(year, 11, 31);
-      }
+    const durationType = Math.random();
+    let durationDays;
+    
+    if (durationType < 0.15) {
+      // 15% - Very short tasks (1-3 days)
+      durationDays = Math.floor(Math.random() * 3) + 1;
+    } else if (durationType < 0.35) {
+      // 20% - Short tasks (4-7 days, ~1 week)
+      durationDays = Math.floor(Math.random() * 4) + 4;
+    } else if (durationType < 0.60) {
+      // 25% - Medium tasks (1-3 weeks)
+      durationDays = Math.floor(Math.random() * 14) + 7;
+    } else if (durationType < 0.85) {
+      // 25% - Long tasks (3-8 weeks)
+      durationDays = Math.floor(Math.random() * 35) + 21;
+    } else {
+      // 15% - Very long tasks (2-6 months)
+      durationDays = Math.floor(Math.random() * 120) + 60;
+    }
+    
+    endDate = new Date(year, month, day + durationDays);
+    // If end date goes into next year, clamp to Dec 31
+    if (endDate.getFullYear() > year) {
+      endDate = new Date(year, 11, 31);
     }
     
     const startDateStr = date.toISOString().split('T')[0];
@@ -174,31 +189,42 @@ export const useMondayBoard = () => {
 
   // Initialize context listener
   useEffect(() => {
+    console.log('🔧 Initializing useMondayBoard hook', { useMockData, isViewerUser });
+    
     // Load mock data if env var is set
     if (useMockData) {
+      console.log('📦 Using mock data mode');
       loadMockData();
       return;
     }
     
     // Skip initialization if user is a viewer
     if (isViewerUser) {
+      console.log('👁️ User is viewer, skipping initialization');
       return;
     }
     
     let currentBoardId = null;
     
     // Get initial context (important for theme and board ID on first load)
+    console.log('🔍 Fetching initial context from Monday.com');
     monday.get("context").then((res) => {
+      console.log('📥 Received context:', res.data);
       if (res.data) {
         setContext(res.data);
         currentBoardId = res.data?.boardId || res.data?.boardIds?.[0];
+        console.log('🎯 Board ID:', currentBoardId);
       }
+    }).catch(err => {
+      console.error('❌ Error getting context:', err);
     });
     
     // Listen for context changes (theme changes, board switches, etc.)
     monday.listen("context", (res) => {
+      console.log('🔄 Context changed:', res.data);
       setContext(res.data);
       currentBoardId = res.data?.boardId || res.data?.boardIds?.[0];
+      console.log('🎯 Updated board ID:', currentBoardId);
     });
     
     monday.listen("settings", (res) => {
@@ -231,11 +257,14 @@ export const useMondayBoard = () => {
 
   // Load mock data for development
   const loadMockData = () => {
+    console.log('🎭 Generating mock data...');
     const mockItems = generateMockItems();
     console.log(`📦 Loading ${mockItems.length} mock items`);
+    console.log('📋 Mock items sample:', mockItems.slice(0, 2));
     
     setColumns(MOCK_COLUMNS);
     setGroups(MOCK_GROUPS);
+    console.log('📁 Mock groups:', MOCK_GROUPS);
     setItems(mockItems);
     setBoardData({ id: "mock-board", name: "Development Board" });
     setSettings(prev => ({
@@ -244,6 +273,7 @@ export const useMondayBoard = () => {
       statusColumn: "status"
     }));
     setLoading(false);
+    console.log('✅ Mock data loaded successfully');
   };
 
   // Fetch board data when context is available
@@ -306,11 +336,13 @@ export const useMondayBoard = () => {
    * Fetch board structure and items
    */
   const fetchBoardData = async (boardId) => {
+    console.log('🔄 Fetching board data for boardId:', boardId);
     setLoading(true);
     setError(null);
     
     try {
       // First, get board structure (columns, groups)
+      console.log('📡 Sending GraphQL query for board structure...');
       const boardQuery = `
         query ($boardId: [ID!]) {
           boards(ids: $boardId) {
@@ -335,11 +367,14 @@ export const useMondayBoard = () => {
         variables: { boardId: [boardId] }
       });
       
+      console.log('📥 Board response:', boardResponse);
+      
       // Check if this is a viewer error (GraphQL validation errors often indicate no API access)
       if (boardResponse.errors && boardResponse.errors.length > 0) {
+        console.error('❌ GraphQL errors:', boardResponse.errors);
         const errorMessages = boardResponse.errors.map(e => e.message).join(', ');
         if (errorMessages.includes('validation') || errorMessages.includes('access') || errorMessages.includes('permission')) {
-          console.warn('Potential viewer access issue:', errorMessages);
+          console.warn('⚠️ Potential viewer access issue:', errorMessages);
           setIsViewerUser(true);
           setError("viewer_access");
           setLoading(false);
@@ -349,6 +384,10 @@ export const useMondayBoard = () => {
       
       if (boardResponse.data?.boards?.[0]) {
         const board = boardResponse.data.boards[0];
+        console.log('✅ Board data received:', { id: board.id, name: board.name, columnsCount: board.columns.length, groupsCount: board.groups.length });
+        console.log('📋 Columns:', board.columns);
+        console.log('📁 Groups:', board.groups);
+        
         setBoardData(board);
         setColumns(board.columns);
         setGroups(board.groups);
@@ -375,13 +414,15 @@ export const useMondayBoard = () => {
       }
       
       // Fetch users for person column display and filtering
+      console.log('👥 Fetching users...');
       await fetchUsers();
       
       // Now fetch items
+      console.log('📋 Fetching items...');
       await fetchItems(boardId);
       
     } catch (err) {
-      console.error("Error fetching board data:", err);
+      console.error("❌ Error fetching board data:", err);
       
       // Check if error indicates viewer/permission issues
       const errorMsg = err.message || err.toString();
@@ -389,6 +430,7 @@ export const useMondayBoard = () => {
           errorMsg.includes('access') || 
           errorMsg.includes('permission') ||
           errorMsg.includes('viewer')) {
+        console.warn('⚠️ Viewer/permission error detected');
         setIsViewerUser(true);
         setError("viewer_access");
       } else {
@@ -396,6 +438,7 @@ export const useMondayBoard = () => {
       }
     } finally {
       setLoading(false);
+      console.log('🏁 fetchBoardData completed');
     }
   };
 
@@ -404,6 +447,7 @@ export const useMondayBoard = () => {
    * Implements cursor-based pagination and rate limit handling
    */
   const fetchItems = async (boardId) => {
+    console.log('📋 Starting fetchItems for boardId:', boardId);
     try {
       let allItems = [];
       let cursor = null;
@@ -413,6 +457,7 @@ export const useMondayBoard = () => {
       
       while (hasMore) {
         pageCount++;
+        console.log(`📄 Fetching page ${pageCount}...`);
         setLoadingProgress(`Loading items (page ${pageCount})...`);
         
         const itemsQuery = `
@@ -475,9 +520,12 @@ export const useMondayBoard = () => {
       
       setItems(allItems);
       setLoadingProgress(null);
-      console.log(`✓ Loaded ${allItems.length} items from board`);
+      console.log(`✅ Successfully loaded ${allItems.length} items from board`);
+      if (allItems.length > 0) {
+        console.log('📋 First item sample:', allItems[0]);
+      }
     } catch (err) {
-      console.error("Error fetching items:", err);
+      console.error("❌ Error fetching items:", err);
       setLoadingProgress(null);
       
       // Handle rate limit errors specifically
@@ -1478,6 +1526,7 @@ export const useMondayBoard = () => {
     loadingProgress,
     error,
     isViewerUser,
+    context,
     wheelItems: getWheelItems(),
     openItem,
     refresh,

@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useCallback,
+  useState,
 } from "react";
 import "./App.css";
 import mondaySdk from "monday-sdk-js";
@@ -24,7 +25,13 @@ if (isDevelopment && import.meta.env.VITE_MONDAY_API_TOKEN) {
 }
 
 const App = () => {
+  console.log('🚀 App component mounting');
+  
+  // Track Monday.com theme for applying body class
+  const [mondayTheme, setMondayTheme] = useState('light');
+  
   const {
+    context,
     loading,
     error,
     items,
@@ -32,10 +39,45 @@ const App = () => {
     updateItemDates,
   } = useMondayBoard();
 
+  console.log('📊 App state:', { loading, error, itemsCount: items?.length, groupsCount: groups?.length });
+
+  // Apply Monday.com theme class to body - THIS IS WHAT MAKES CSS VARIABLES WORK
+  useEffect(() => {
+    const theme = context?.theme || 'light';
+    console.log('🎨 Monday theme from context:', theme);
+    setMondayTheme(theme);
+    
+    // Remove any existing theme classes
+    document.body.classList.remove(
+      'light-app-theme', 
+      'dark-app-theme', 
+      'black-app-theme', 
+      'night-app-theme', 
+      'hacker-app-theme', 
+      'hacker_theme-app-theme'
+    );
+    
+    // Add current theme class - this triggers CSS variables from @vibe/core/tokens
+    document.body.classList.add(`${theme}-app-theme`);
+    console.log('🎨 Applied body class:', `${theme}-app-theme`);
+  }, [context?.theme]);
+
   // Notify Monday that user has value
   useEffect(() => {
+    console.log('✅ Executing valueCreatedForUser');
     monday.execute("valueCreatedForUser");
   }, []);
+
+  // Log whenever items or groups change
+  useEffect(() => {
+    console.log('📦 Data updated - Items:', items?.length || 0, 'Groups:', groups?.length || 0);
+    if (items?.length > 0) {
+      console.log('📋 First item sample:', items[0]);
+    }
+    if (groups?.length > 0) {
+      console.log('📁 Groups:', groups);
+    }
+  }, [items, groups]);
 
   // Handle item update from Gantt (if drag/resize is enabled in future)
   const handleItemUpdate = useCallback(
@@ -59,6 +101,7 @@ const App = () => {
 
   // Show loading state
   if (loading) {
+    console.log('⏳ Rendering loading state');
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <WheelLoader />
@@ -68,6 +111,7 @@ const App = () => {
 
   // Show error state
   if (error) {
+    console.error('❌ Rendering error state:', error);
     return (
       <Box padding="large">
         <Text type="text1" color="negative">
@@ -77,6 +121,8 @@ const App = () => {
     );
   }
 
+  console.log('✨ Rendering GanttView with', items?.length, 'items and', groups?.length, 'groups');
+  
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <GanttView

@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { startOfMonth, endOfMonth, addMonths, format } from 'date-fns';
+import { startOfMonth, endOfMonth, addMonths, startOfWeek, endOfWeek, addWeeks, getISOWeek, format, addDays } from 'date-fns';
 import GanttToolbar from './GanttToolbar';
 import GanttRowPane from './GanttRowPane';
 import GanttTimelinePane from './GanttTimelinePane';
 import { useMondayGanttData } from './useMondayGanttData';
 import { useTimeScale } from './useTimeScale';
+import { useMondayTheme } from '../../hooks/useMondayTheme';
 import { Text } from "@vibe/core";
 
 /**
@@ -14,6 +15,7 @@ import { Text } from "@vibe/core";
  * - Group-based swimlanes
  * - Timeline bars
  * - Pan and zoom capabilities
+ * - Automatic theme adaptation via CSS variables
  * 
  * @param {Array} items - Monday.com items with startDate/endDate
  * @param {Array} groups - Monday.com groups
@@ -24,10 +26,16 @@ const GanttView = ({
   groups = [],
   onUpdateItem,
 }) => {
+  console.log('🎨 GanttView rendering with:', { itemsCount: items?.length, groupsCount: groups?.length });
+  
+  // Get theme colors from CSS variables (requires body class to be set by App.jsx)
+  const { themeColors } = useMondayTheme();
+  
   // View state
   const [yearFilter, setYearFilter] = useState('all');
   const [expandedGroups, setExpandedGroups] = useState({});
   const [selectedItemId, setSelectedItemId] = useState(null);
+  const [colorTheme, setColorTheme] = useState('monday');
   
   // Time scale state
   const [viewStart, setViewStart] = useState(() => {
@@ -74,6 +82,12 @@ const GanttView = ({
     items,
     groups,
     yearFilter,
+  });
+  
+  console.log('🔄 Transformed data:', { 
+    groupedItemsKeys: Object.keys(groupedItems), 
+    allItemsCount: allItems?.length,
+    availableYears 
   });
   
   // Constants for row heights - must match both panes
@@ -129,10 +143,67 @@ const GanttView = ({
   // Generate timeline ticks for header
   const timelineTicks = useMemo(() => {
     const ticks = [];
+    const startYear = viewStart.getFullYear();
+    const endYear = viewEnd.getFullYear();
+    const showYear = yearFilter === 'all' || startYear !== endYear;
+    
+    if (zoomLevel === 'month') {
+      // Monthly ticks
+      let current = startOfMonth(viewStart);
+      const end = endOfMonth(viewEnd);
+      
+      while (current <= end) {
+        const tickEnd = endOfMonth(current);
+        ticks.push({
+          date: current,
+          label: format(current, 'MMM'),
+          labelLine2: showYear ? format(current, 'yy') : null,
+          width: timeScale.dateToX(tickEnd) - timeScale.dateToX(current),
+        });
+        current = addMonths(current, 1);
+      }
+    } else if (zoomLevel === 'week') {
+      // Weekly ticks
+      let current = startOfWeek(viewStart, { weekStartsOn: 1 }); // Monday
+      const end = viewEnd;
+      
+      while (current <= end) {
+        const tickEnd = endOfWeek(current, { weekStartsOn: 1 });
+        const weekNum = getISOWeek(current);
+        ticks.push({
+          date: current,
+          label: `W${weekNum}`,
+          labelLine2: showYear ? format(current, 'yy') : null,
+          width: timeScale.dateToX(tickEnd) - timeScale.dateToX(current),
+        });
+        current = addWeeks(current, 1);
+      }
+    } else if (zoomLevel === 'day') {
+      // Daily ticks
+      let current = new Date(viewStart);
+      const end = viewEnd;
+      
+      while (current <= end) {
+        ticks.push({
+          date: current,
+          label: format(current, 'd'),
+          labelLine2: null,
+          width: timeScale.dateToX(addDays(current, 1)) - timeScale.dateToX(current),
+        });
+        current = addDays(current, 1);
+      }
+    }
+    
+    return ticks;
+  }, [timeScale, viewStart, viewEnd, yearFilter, zoomLevel]);
+  
+  // Generate month span ticks for day view (top row)
+  const monthSpanTicks = useMemo(() => {
+    if (zoomLevel !== 'day') return [];
+    
+    const ticks = [];
     let current = startOfMonth(viewStart);
     const end = endOfMonth(viewEnd);
-    
-    // Determine if we're showing multiple years
     const startYear = viewStart.getFullYear();
     const endYear = viewEnd.getFullYear();
     const showYear = yearFilter === 'all' || startYear !== endYear;
@@ -149,7 +220,7 @@ const GanttView = ({
     }
     
     return ticks;
-  }, [timeScale, viewStart, viewEnd, yearFilter]);
+  }, [timeScale, viewStart, viewEnd, yearFilter, zoomLevel]);
   
   // Scroll to appropriate position when year filter changes
   useEffect(() => {
@@ -258,24 +329,27 @@ const GanttView = ({
   };
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f9fafb' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: themeColors.primaryBackground }}>
       {/* Toolbar */}
       <GanttToolbar
         yearFilter={yearFilter}
         availableYears={availableYears}
         zoomLevel={zoomLevel}
+        colorTheme={colorTheme}
+        themeColors={themeColors}
         onYearChange={handleYearChange}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onTodayClick={handleTodayClick}
+        onColorThemeChange={setColorTheme}
       />
       
       {/* Unified sticky header row */}
       <div style={{
         flexShrink: 0,
         display: 'flex',
-        borderBottom: '1px solid #e5e7eb',
-        backgroundColor: 'white',
+        borderBottom: `1px solid ${themeColors.uiBorder}`,
+        backgroundColor: themeColors.primaryBackground,
         position: 'sticky',
         top: 0,
         zIndex: 20,
@@ -286,10 +360,10 @@ const GanttView = ({
           width: '320px',
           flexShrink: 0,
           padding: '12px',
-          backgroundColor: '#f3f4f6',
-          borderRight: '1px solid #e5e7eb'
+          backgroundColor: themeColors.backgroundHover,
+          borderRight: `1px solid ${themeColors.uiBorder}`
         }}>
-          <Text type="text2" weight="bold" style={{ color: '#374151' }}>
+          <Text type="text2" weight="bold" style={{ color: themeColors.primaryText }}>
             Groups
           </Text>
         </div>
@@ -300,18 +374,50 @@ const GanttView = ({
           style={{
             flex: 1,
             overflowX: 'hidden',
-            backgroundColor: '#f9fafb',
+            backgroundColor: themeColors.primaryBackground,
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
           }}
         >
-          <div style={{ display: 'flex', height: '40px', alignItems: 'stretch', width: `${timelineWidth}px` }}>
+          {/* Month span row for day view */}
+          {zoomLevel === 'day' && monthSpanTicks.length > 0 && (
+            <div style={{ display: 'flex', height: '24px', alignItems: 'stretch', width: `${timelineWidth}px`, borderBottom: `1px solid ${themeColors.uiBorder}` }}>
+              {monthSpanTicks.map((tick, index) => (
+                <div
+                  key={index}
+                  style={{
+                    flexShrink: 0,
+                    borderRight: `1px solid ${themeColors.uiBorder}`,
+                    padding: '2px 4px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    width: `${tick.width}px`,
+                    backgroundColor: themeColors.primaryBackground
+                  }}
+                >
+                  <span style={{ fontSize: '11px', fontWeight: '600', color: themeColors.secondaryText, lineHeight: '1.2' }}>
+                    {tick.label}
+                  </span>
+                  {tick.labelLine2 && (
+                    <span style={{ fontSize: '9px', color: themeColors.secondaryText, lineHeight: '1.2', opacity: 0.7 }}>
+                      {tick.labelLine2}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Main tick row */}
+          <div style={{ display: 'flex', height: zoomLevel === 'day' ? '32px' : '40px', alignItems: 'stretch', width: `${timelineWidth}px` }}>
             {timelineTicks.map((tick, index) => (
               <div
                 key={index}
                 style={{
                   flexShrink: 0,
-                  borderRight: '1px solid #e5e7eb',
+                  borderRight: `1px solid ${themeColors.uiBorder}`,
                   padding: '4px',
                   textAlign: 'center',
                   display: 'flex',
@@ -320,11 +426,11 @@ const GanttView = ({
                   width: `${tick.width}px`
                 }}
               >
-                <span style={{ fontSize: '12px', fontWeight: '500', color: '#6B7280', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '12px', fontWeight: '500', color: themeColors.secondaryText, lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {tick.label}
                 </span>
                 {tick.labelLine2 && (
-                  <span style={{ fontSize: '10px', color: '#9CA3AF', lineHeight: '1.2' }}>
+                  <span style={{ fontSize: '10px', color: themeColors.secondaryText, lineHeight: '1.2', opacity: 0.7 }}>
                     {tick.labelLine2}
                   </span>
                 )}
@@ -349,6 +455,7 @@ const GanttView = ({
           expandedGroups={expandedGroups}
           selectedItemId={selectedItemId}
           groups={groups}
+          themeColors={themeColors}
           onToggleGroup={toggleGroup}
           onItemClick={handleRowItemClick}
           contentHeight={contentHeight}
@@ -361,6 +468,8 @@ const GanttView = ({
           selectedItemId={selectedItemId}
           timeScale={timeScale}
           groups={groups}
+          colorTheme={colorTheme}
+          themeColors={themeColors}
           onItemClick={handleBarClick}
           onHeaderScroll={(scrollLeft) => {
             if (timelineHeaderRef.current) {

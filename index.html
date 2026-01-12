@@ -16,10 +16,16 @@
     -->
     <link rel="manifest" href="/manifest.json" />
     <title>React App</title>
+    <script>
+      console.log('🌟 HTML loaded - Monday.com app starting...');
+      console.log('📍 Location:', window.location.href);
+      console.log('🔍 User Agent:', navigator.userAgent);
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>console.log('📦 Root div ready');</script>
     <script type="module" src="/src/index.jsx"></script>
   </body>
 </html>

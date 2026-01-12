@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { COLOR_THEMES } from '../../constants/colorThemes';
 
 /**
  * GanttTimelinePane Component
@@ -8,6 +9,7 @@ import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
  * - SVG bars for items
  * - Today marker
  * - Grid lines
+ * - Theme-aware colors from Monday.com
  */
 const GanttTimelinePane = ({
   groupedItems,
@@ -15,6 +17,8 @@ const GanttTimelinePane = ({
   selectedItemId,
   timeScale,
   groups,
+  colorTheme = 'monday',
+  themeColors,
   onItemClick,
   onHeaderScroll,
   effectiveWidth,
@@ -26,6 +30,9 @@ const GanttTimelinePane = ({
   const [containerWidth, setContainerWidth] = useState(0);
   const internalScrollRef = useRef(null);
   const scrollContainerRef = scrollRef || internalScrollRef;
+  
+  // Get bar colors from color theme
+  const barColors = COLOR_THEMES[colorTheme]?.colors || COLOR_THEMES.monday.colors;
   
   // Update container width on mount and resize
   useEffect(() => {
@@ -44,9 +51,9 @@ const GanttTimelinePane = ({
   const GROUP_HEADER_HEIGHT = 36;
   const ITEM_ROW_HEIGHT = 40;
   
-  const getGroupColor = (groupId) => {
-    const group = groups.find(g => g.id === groupId);
-    return group?.color || '#94A3B8';
+  const getGroupColor = (groupIndex) => {
+    // Use bar colors from color theme, cycling through the palette
+    return barColors[groupIndex % barColors.length];
   };
   
   // Generate time ticks based on zoom level
@@ -97,7 +104,7 @@ const GanttTimelinePane = ({
     const bars = [];
     let currentY = 0;
     
-    Object.entries(groupedItems).forEach(([groupId, items]) => {
+    Object.entries(groupedItems).forEach(([groupId, items], groupIndex) => {
       // Add space for group header
       currentY += GROUP_HEADER_HEIGHT;
       
@@ -118,7 +125,7 @@ const GanttTimelinePane = ({
           // Y position - center 24px bar within 40px row (8px padding top/bottom)
           const y = currentY + index * ITEM_ROW_HEIGHT + 8;
           
-          const color = getGroupColor(groupId);
+          const color = getGroupColor(groupIndex);
           const isSelected = selectedItemId === item.id;
           
           bars.push(
@@ -177,7 +184,7 @@ const GanttTimelinePane = ({
       style={{
         flex: 1,
         overflowX: 'auto',
-        backgroundColor: 'white',
+        backgroundColor: themeColors.primaryBackground,
         minWidth: 0,
         height: `${totalHeight}px`
       }}
@@ -208,7 +215,7 @@ const GanttTimelinePane = ({
                 y1={0}
                 x2={x}
                 y2={totalHeight}
-                stroke="#E5E7EB"
+                stroke={themeColors.uiBorder}
                 strokeWidth={1}
               />
             );
