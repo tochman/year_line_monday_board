@@ -86,6 +86,8 @@ const App = () => {
   // Handle item update from Gantt (if drag/resize is enabled in future)
   const handleItemUpdate = useCallback(
     async (updatedItem) => {
+      console.log('🔄 handleItemUpdate called with:', updatedItem);
+      
       if (updatedItem && updatedItem.id) {
         const startDate = updatedItem.startDate;
         const endDate = updatedItem.endDate;
@@ -96,8 +98,15 @@ const App = () => {
           return;
         }
 
-        // Save to Monday.com
-        await updateItemDates(updatedItem.id, startDate, endDate);
+        try {
+          // Save to Monday.com
+          console.log('💾 Calling updateItemDates:', { itemId: updatedItem.id, startDate, endDate });
+          const result = await updateItemDates(updatedItem.id, startDate, endDate);
+          console.log('✅ updateItemDates result:', result);
+        } catch (error) {
+          console.error('❌ Error in handleItemUpdate:', error);
+          throw error; // Re-throw to let GanttView handle it
+        }
       }
     },
     [updateItemDates]

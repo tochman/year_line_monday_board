@@ -405,9 +405,6 @@ const GanttView = ({
   const handleDragDropUpdate = async (updatedItem) => {
     console.log('🎯 Handling drag/drop update:', updatedItem);
 
-    // Set flag to skip next board refetch (optimistic update)
-    window.__skipNextBoardRefetch = true;
-
     try {
       // Check if dates changed
       const originalItem = allItems.find(i => i.id === updatedItem.id);
@@ -417,10 +414,23 @@ const GanttView = ({
       }
 
       const datesChanged = updatedItem.startDate !== originalItem.startDate || updatedItem.endDate !== originalItem.endDate;
-      const groupChanged = updatedItem.groupId !== originalItem.group?.id;
+      const groupChanged = updatedItem.groupId && updatedItem.groupId !== originalItem.group?.id;
+
+      // Set flag to skip next board refetch (optimistic update)
+      if (datesChanged || groupChanged) {
+        window.__skipNextBoardRefetch = true;
+      }
 
       // Update dates if changed
       if (datesChanged && onUpdateItem) {
+        console.log('📅 Updating dates:', { 
+          itemId: updatedItem.id, 
+          from: originalItem.startDate, 
+          to: updatedItem.startDate,
+          fromEnd: originalItem.endDate,
+          toEnd: updatedItem.endDate
+        });
+        
         await onUpdateItem({
           ...originalItem,
           startDate: updatedItem.startDate,
@@ -429,8 +439,9 @@ const GanttView = ({
         console.log('✅ Dates updated via drag');
       }
 
-      // Update group if changed
+      // Update group if changed (only if groupId is explicitly set)
       if (groupChanged && updateItemGroup) {
+        console.log('📁 Updating group:', { itemId: updatedItem.id, newGroupId: updatedItem.groupId });
         await updateItemGroup(updatedItem.id, updatedItem.groupId);
         console.log('✅ Group updated via drag');
       }
@@ -438,9 +449,28 @@ const GanttView = ({
       console.log('✅ Drag/drop update complete');
     } catch (err) {
       console.error('❌ Error in drag/drop update:', err);
-      // On error, force a refetch to restore correct state
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        error: err
+      });
+      
+      // Clear the skip flag on error
       delete window.__skipNextBoardRefetch;
-      window.location.reload();
+      
+      // Show user-friendly error
+      if (window.mondaySDK) {
+        window.mondaySDK.execute('notice', {
+          message: 'Failed to update item. The page will refresh.',
+          type: 'error',
+          timeout: 3000
+        });
+      }
+      
+      // Reload after a delay to show the error
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } finally {
       // Clear the flag after a short delay
       setTimeout(() => {

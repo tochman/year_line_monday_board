@@ -157,8 +157,20 @@ const GanttTimelinePane = ({
       isDraggingRef.current = true;
     }
     
+    // Calculate pixels per day - use effectiveWidth if containerWidth is not available
+    const width = timeScale.containerWidth || effectiveWidth || containerWidth;
+    const totalMs = timeScale.viewEnd.getTime() - timeScale.viewStart.getTime();
+    const totalDays = totalMs / (1000 * 60 * 60 * 24);
+    const pixelsPerDay = width / totalDays;
+    
+    // Validate calculation inputs
+    if (!width || !totalDays || !pixelsPerDay || isNaN(pixelsPerDay)) {
+      console.error('Invalid scale calculation:', { width, totalDays, pixelsPerDay, timeScale });
+      return;
+    }
+    
     // Convert pixel delta to days
-    const deltaDays = Math.round(deltaX / (timeScale.containerWidth / ((timeScale.viewEnd - timeScale.viewStart) / (1000 * 60 * 60 * 24))));
+    const deltaDays = Math.round(deltaX / pixelsPerDay);
     
     let newStartDate, newEndDate;
     
@@ -203,6 +215,9 @@ const GanttTimelinePane = ({
         mode: dragState.mode,
         deltaDays,
         deltaX,
+        width,
+        totalDays,
+        pixelsPerDay,
         originalStart: dragState.originalStartDate,
         originalEnd: dragState.originalEndDate,
         newStartDate,

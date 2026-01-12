@@ -873,9 +873,17 @@ export const useMondayBoard = () => {
           value: JSON.stringify({ from: startDate, to: endDate })
         };
         
+        console.log('📡 Calling Monday API to update timeline:', variables);
         
         const result = await monday.api(mutation, { variables });
         
+        console.log('📡 Monday API response:', result);
+        
+        // Check for GraphQL errors in response
+        if (result.errors && result.errors.length > 0) {
+          console.error('❌ GraphQL errors in response:', result.errors);
+          throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+        }
         
         return { success: true, column: 'Timeline', startDate, endDate };
       }
@@ -906,9 +914,17 @@ export const useMondayBoard = () => {
           value: JSON.stringify({ date: startDate })
         };
         
+        console.log('📡 Calling Monday API to update date:', variables);
         
         const result = await monday.api(mutation, { variables });
         
+        console.log('📡 Monday API response:', result);
+        
+        // Check for GraphQL errors in response
+        if (result.errors && result.errors.length > 0) {
+          console.error('❌ GraphQL errors in response:', result.errors);
+          throw new Error(`GraphQL Error: ${result.errors.map(e => e.message).join(', ')}`);
+        }
         
         return { success: true, column: 'Date', startDate };
       } else {
