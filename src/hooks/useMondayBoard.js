@@ -369,16 +369,32 @@ export const useMondayBoard = () => {
       
       console.log('📥 Board response:', boardResponse);
       
-      // Check if this is a viewer error (GraphQL validation errors often indicate no API access)
+      // Check for GraphQL errors that prevent data loading
       if (boardResponse.errors && boardResponse.errors.length > 0) {
         console.error('❌ GraphQL errors:', boardResponse.errors);
         const errorMessages = boardResponse.errors.map(e => e.message).join(', ');
-        if (errorMessages.includes('validation') || errorMessages.includes('access') || errorMessages.includes('permission')) {
-          console.warn('⚠️ Potential viewer access issue:', errorMessages);
-          setIsViewerUser(true);
-          setError("viewer_access");
-          setLoading(false);
-          return;
+        
+        // Only treat as viewer error if we got NO data AND specific viewer/auth error
+        if (!boardResponse.data?.boards?.[0]) {
+          // Check for explicit authentication/authorization errors
+          const hasAuthError = boardResponse.errors.some(e => 
+            e.extensions?.code === 'authentication_error' ||
+            e.extensions?.code === 'authorization_error' ||
+            (e.message && e.message.toLowerCase().includes('not authorized'))
+          );
+          
+          if (hasAuthError) {
+            console.warn('⚠️ Authentication/authorization error - likely viewer access');
+            setIsViewerUser(true);
+            setError("viewer_access");
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // If we have data despite errors, continue (partial success)
+        if (boardResponse.data?.boards?.[0]) {
+          console.warn('⚠️ GraphQL errors present but got data, continuing...', errorMessages);
         }
       }
       
@@ -424,17 +440,23 @@ export const useMondayBoard = () => {
     } catch (err) {
       console.error("❌ Error fetching board data:", err);
       
-      // Check if error indicates viewer/permission issues
+      // Only check for explicit authorization errors, not general errors
       const errorMsg = err.message || err.toString();
-      if (errorMsg.includes('validation') || 
-          errorMsg.includes('access') || 
-          errorMsg.includes('permission') ||
-          errorMsg.includes('viewer')) {
-        console.warn('⚠️ Viewer/permission error detected');
+      const isAuthError = 
+        errorMsg.toLowerCase().includes('not authorized') ||
+        errorMsg.toLowerCase().includes('authentication failed') ||
+        errorMsg.toLowerCase().includes('viewer') ||
+        (err.extensions?.code === 'authentication_error') ||
+        (err.extensions?.code === 'authorization_error');
+      
+      if (isAuthError) {
+        console.warn('⚠️ Authentication/authorization error detected');
         setIsViewerUser(true);
         setError("viewer_access");
       } else {
-        setError(err.message || "Failed to fetch board data");
+        // Show the actual error message for debugging
+        console.error('❌ Board data fetch failed:', errorMsg);
+        setError(errorMsg || "Failed to fetch board data");
       }
     } finally {
       setLoading(false);
