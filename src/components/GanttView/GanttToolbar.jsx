@@ -7,6 +7,7 @@ import { COLOR_THEMES } from '../../constants/colorThemes';
  * 
  * Top toolbar with controls for:
  * - Year selection
+ * - Group by selection
  * - Today button
  * - Zoom controls
  * - Color theme selection
@@ -14,10 +15,12 @@ import { COLOR_THEMES } from '../../constants/colorThemes';
 const GanttToolbar = ({
   yearFilter,
   availableYears,
+  groupBy,
   zoomLevel,
   colorTheme = 'monday',
   themeColors,
   onYearChange,
+  onGroupByChange,
   onZoomIn,
   onZoomOut,
   onTodayClick,
@@ -26,6 +29,11 @@ const GanttToolbar = ({
   const yearOptions = [
     { value: 'all', label: 'All Years' },
     ...availableYears.map(year => ({ value: String(year), label: String(year) }))
+  ];
+  
+  const groupByOptions = [
+    { value: 'groups', label: 'Groups' },
+    { value: 'status', label: 'Status' }
   ];
 
   const zoomLevels = {
@@ -39,14 +47,6 @@ const GanttToolbar = ({
     label: COLOR_THEMES[key].name
   }));
   
-  console.log('🎛️ Toolbar state:', { 
-    yearFilter, 
-    yearOptionsCount: yearOptions.length,
-    colorTheme, 
-    themeOptionsCount: themeOptions.length,
-    zoomLevel 
-  });
-  
   return (
     <Flex 
       justify="space-between" 
@@ -54,7 +54,9 @@ const GanttToolbar = ({
       style={{ 
         padding: '16px 24px', 
         backgroundColor: themeColors.primaryBackground, 
-        borderBottom: `1px solid ${themeColors.uiBorder}` 
+        borderBottom: `1px solid ${themeColors.uiBorder}`,
+        position: 'relative',
+        zIndex: 100
       }}
     >
       {/* Left: Title and Year selector */}
@@ -69,20 +71,25 @@ const GanttToolbar = ({
               placeholder="Select year"
               options={yearOptions}
               value={yearOptions.find(opt => opt.value === yearFilter)}
-              onChange={(option) => {
-                console.log('📅 Year changed:', option);
-                onYearChange(option?.value);
-              }}
+              onChange={(option) => onYearChange(option?.value)}
+              size="medium"
+              clearable={false}
+            />
+          </div>
+          
+          <div style={{ minWidth: '140px' }}>
+            <Dropdown
+              placeholder="Group by"
+              options={groupByOptions}
+              value={groupByOptions.find(opt => opt.value === groupBy)}
+              onChange={(option) => onGroupByChange(option?.value)}
               size="medium"
               clearable={false}
             />
           </div>
           
           <Button
-            onClick={() => {
-              console.log('📍 Today clicked');
-              onTodayClick();
-            }}
+            onClick={onTodayClick}
             kind="tertiary"
             size="medium"
             leftIcon={Calendar}

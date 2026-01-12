@@ -4,7 +4,7 @@ import { Text } from "@vibe/core";
 /**
  * GanttRowPane Component
  * 
- * Left panel showing grouped rows (Monday groups)
+ * Left panel showing grouped rows (Monday groups or status)
  * Uses themeColors from parent for proper Monday.com theme adaptation
  */
 const GanttRowPane = ({
@@ -12,14 +12,23 @@ const GanttRowPane = ({
   expandedGroups,
   selectedItemId,
   groups,
+  groupBy = 'groups',
   themeColors,
   onToggleGroup,
   onItemClick,
   contentHeight,
 }) => {
-  // Get group metadata
+  // Get group metadata based on groupBy mode
   const getGroupInfo = (groupId) => {
-    return groups.find(g => g.id === groupId) || { title: 'Unknown', color: '#94A3B8' };
+    if (groupBy === 'groups') {
+      return groups.find(g => g.id === groupId) || { title: 'Unknown', color: '#94A3B8' };
+    } else if (groupBy === 'status') {
+      // For status grouping, use the first item's statusLabel
+      const items = groupedItems[groupId] || [];
+      const label = items[0]?.statusLabel || (groupId === 'no-status' ? 'No Status' : groupId);
+      return { title: label, color: '#94A3B8' };
+    }
+    return { title: 'Unknown', color: '#94A3B8' };
   };
   
   const renderGroup = (groupId, items) => {

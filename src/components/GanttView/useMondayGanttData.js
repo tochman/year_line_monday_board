@@ -5,26 +5,30 @@ import { useMemo } from 'react';
  * 
  * Transforms Monday.com board data into Gantt-ready format
  * Parses column_values to extract dates from timeline/date columns
- * Groups items by Monday groups
+ * Groups items by Monday groups or status column
  * Filters by year if specified
  * 
  * @param {Array} items - Monday.com items with column_values array
  * @param {Array} groups - Monday.com groups
  * @param {string} yearFilter - 'all' or specific year
+ * @param {string} groupBy - 'groups' or 'status'
  * @returns {Object} { groupedItems, allItems, availableYears }
  */
 export const useMondayGanttData = ({
   items = [],
   groups = [],
   yearFilter,
+  groupBy = 'groups',
 }) => {
-  // Transform Monday items to extract dates from column_values
+  // Transform Monday items to extract dates and status from column_values
   const transformedItems = useMemo(() => {
     return items.map(item => {
       let startDate = null;
       let endDate = null;
+      let status = null;
+      let statusLabel = 'No Status';
       
-      // Parse column_values to find dates
+      // Parse column_values to find dates and status
       item.column_values?.forEach(col => {
         if (!col.value) return;
         
@@ -41,6 +45,13 @@ export const useMondayGanttData = ({
               startDate = dateData.date;
               endDate = dateData.date; // Single day item
             }
+          } else if (col.type === 'status' && !status) {
+            // Parse status column
+            const statusData = JSON.parse(col.value);
+            if (statusData.label || statusData.text) {
+              status = statusData.index || statusData.label || statusData.text;
+              statusLabel = statusData.label || statusData.text || 'Unknown';
+            }
           }
         } catch (err) {
           // Skip invalid JSON
@@ -51,6 +62,8 @@ export const useMondayGanttData = ({
         ...item,
         startDate,
         endDate: endDate || startDate,
+        status,
+        statusLabel,
       };
     }).filter(item => item.startDate); // Only include items with dates
   }, [items]);
@@ -86,22 +99,33 @@ export const useMondayGanttData = ({
     });
   }, [transformedItems, yearFilter]);
 
-  // Group items by Monday group
+  // Group items by Monday group or status
   const groupedItems = useMemo(() => {
     const grouped = {};
     
-    // Initialize groups from Monday groups
-    groups.forEach(group => {
-      grouped[group.id] = [];
-    });
-    
-    // Distribute items to groups
-    filteredItems.forEach(item => {
-      const groupId = item.group?.id;
-      if (groupId && grouped[groupId]) {
-        grouped[groupId].push(item);
-      }
-    });
+    if (groupBy === 'groups') {
+      // Initialize groups from Monday groups
+      groups.forEach(group => {
+        grouped[group.id] = [];
+      });
+      
+      // Distribute items to groups
+      filteredItems.forEach(item => {
+        const groupId = item.group?.id;
+        if (groupId && grouped[groupId]) {
+          grouped[groupId].push(item);
+        }
+      });
+    } else if (groupBy === 'status') {
+      // Group by status
+      filteredItems.forEach(item => {
+        const statusKey = item.status || 'no-status';
+        if (!grouped[statusKey]) {
+          grouped[statusKey] = [];
+        }
+        grouped[statusKey].push(item);
+      });
+    }
     
     // Sort items within each group by start date
     Object.keys(grouped).forEach(groupId => {
@@ -111,7 +135,7 @@ export const useMondayGanttData = ({
     });
     
     return grouped;
-  }, [filteredItems, groups]);
+  }, [filteredItems, groups, groupBy]);
 
   return {
     groupedItems,

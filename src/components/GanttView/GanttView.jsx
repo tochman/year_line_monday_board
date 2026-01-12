@@ -42,6 +42,7 @@ const GanttView = ({
   
   // View state
   const [yearFilter, setYearFilter] = useState('all');
+  const [groupBy, setGroupBy] = useState('groups'); // 'groups' or 'status'
   const [expandedGroups, setExpandedGroups] = useState({});
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [colorTheme, setColorTheme] = useState('monday');
@@ -95,6 +96,7 @@ const GanttView = ({
     items,
     groups,
     yearFilter,
+    groupBy,
   });
   
   // Constants for row heights - must match both panes
@@ -450,10 +452,12 @@ const GanttView = ({
       <GanttToolbar
         yearFilter={yearFilter}
         availableYears={availableYears}
+        groupBy={groupBy}
         zoomLevel={zoomLevel}
         colorTheme={colorTheme}
         themeColors={themeColors}
         onYearChange={handleYearChange}
+        onGroupByChange={setGroupBy}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onTodayClick={handleTodayClick}
@@ -571,6 +575,7 @@ const GanttView = ({
           expandedGroups={expandedGroups}
           selectedItemId={selectedItemId}
           groups={groups}
+          groupBy={groupBy}
           themeColors={themeColors}
           onToggleGroup={toggleGroup}
           onItemClick={handleRowItemClick}
