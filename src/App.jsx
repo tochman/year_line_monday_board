@@ -6,7 +6,7 @@ import React, {
 import "./App.css";
 import mondaySdk from "monday-sdk-js";
 import "@vibe/core/tokens";
-import { Text, Box } from "@vibe/core";
+import { Text, Box, Flex, AttentionBox } from "@vibe/core";
 
 import GanttView from "./components/GanttView";
 import TimelineLoader from "./components/TimelineLoader";
@@ -36,6 +36,7 @@ const App = () => {
     groups,
     users,
     columns,
+    isViewerUser,
     updateItemDates,
     updateItemName,
     updateItemGroup,
@@ -98,6 +99,34 @@ const App = () => {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <TimelineLoader size="lg" />
+      </div>
+    );
+  }
+
+  // Viewer access error state (special handling)
+  if (error === "viewer_access" || isViewerUser) {
+    return (
+      <div className="App error-state">
+        <Flex direction="column" align="center" gap="medium" style={{ padding: "32px", maxWidth: "600px", margin: "0 auto" }}>
+          <AttentionBox
+            title="Access Restricted"
+            text="YearLine is not available for viewer accounts. Viewers don't have API access required to display board data."
+            type="danger"
+          />
+          <Box style={{ textAlign: "center" }}>
+            <Text type="text1" weight="bold" style={{ marginBottom: "8px", display: "block" }}>
+              What can you do?
+            </Text>
+            <Text type="text2" color="secondary" style={{ marginBottom: "16px", display: "block" }}>
+              Contact your board admin to upgrade your permission level to:
+            </Text>
+            <Flex direction="column" gap="xs" align="start" style={{ display: "inline-flex" }}>
+              <Text type="text2">• <strong>Member</strong> - Full board access</Text>
+              <Text type="text2">• <strong>Admin</strong> - Administrative access</Text>
+              <Text type="text2">• <strong>Guest</strong> - Limited board access</Text>
+            </Flex>
+          </Box>
+        </Flex>
       </div>
     );
   }
