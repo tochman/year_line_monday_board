@@ -20,6 +20,7 @@
     "@vibe/icons": "^1.11.2",
     "canvas2svg": "^1.0.16",
     "date-fns": "^2.30.0",
+    "dompurify": "^3.3.1",
     "jspdf": "^3.0.4",
     "monday-sdk-js": "^0.5.5"
   },

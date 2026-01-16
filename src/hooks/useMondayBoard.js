@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import mondaySdk from "monday-sdk-js";
 import { isViewOnlyUser } from "../utils/sessionTokenUtils";
+import { 
+  sanitizeItemName, 
+  sanitizeGroupName, 
+  sanitizeText 
+} from "../utils/sanitization";
 
 const monday = mondaySdk();
 
@@ -721,13 +726,16 @@ export const useMondayBoard = () => {
         
         return {
           id: item.id,
-          name: item.name,
+          name: sanitizeItemName(item.name),
           startDate: startDate,  // Changed from 'date' to 'startDate' for Gantt compatibility
           endDate: endDate || startDate,  // If no end date, use start date (single-day item)
-          status,
+          status: status ? sanitizeText(status) : null,
           assignedUsers,
           assignedUserIds,
-          group: item.group,  // Changed to pass full group object
+          group: {
+            ...item.group,
+            title: sanitizeGroupName(item.group.title)
+          },  // Changed to pass full group object with sanitized title
           groupColor: item.group.color
         };
       })
@@ -1000,11 +1008,14 @@ export const useMondayBoard = () => {
         }
       `;
       
+      // Sanitize the new name before sending to API
+      const sanitizedName = sanitizeItemName(newName);
+      
       const variables = {
         boardId: parseInt(boardId),
         itemId: parseInt(itemId),
         columnId: 'name',
-        value: newName
+        value: sanitizedName
       };
       
       await monday.api(mutation, { variables });
@@ -1016,13 +1027,13 @@ export const useMondayBoard = () => {
       setItems(prevItems => {
         return prevItems.map(item => {
           if (item.id === itemId) {
-            return { ...item, name: newName };
+            return { ...item, name: sanitizedName };
           }
           return item;
         });
       });
       
-      return { success: true, newName };
+      return { success: true, newName: sanitizedName };
     } catch (err) {
       console.error('❌ Error updating item name:', err);
       monday.execute('notice', {
@@ -1167,9 +1178,12 @@ export const useMondayBoard = () => {
         }
       `;
 
+      // Sanitize group name before creating
+      const sanitizedGroupName = sanitizeGroupName(groupName);
+      
       const variables = {
         boardId: parseInt(boardId),
-        groupName: groupName
+        groupName: sanitizedGroupName
       };
 
       const result = await monday.api(mutation, { variables });
@@ -1249,11 +1263,12 @@ export const useMondayBoard = () => {
       
       // Update name if provided
       if (updates.name) {
+        const sanitizedName = sanitizeGroupName(updates.name);
         const nameVariables = {
           boardId: parseInt(boardId),
           groupId: groupId,
           groupAttribute: 'title',
-          newValue: updates.name
+          newValue: sanitizedName
         };
         result = await monday.api(mutation, { variables: nameVariables });
       }
@@ -1566,11 +1581,14 @@ export const useMondayBoard = () => {
         }
       `;
 
+      // Sanitize item name before creating
+      const sanitizedItemName = sanitizeItemName(itemData.name);
+      
       const response = await monday.api(mutation, {
         variables: {
           boardId: parseInt(boardId),
           groupId: itemData.groupId,
-          itemName: itemData.name,
+          itemName: sanitizedItemName,
           columnValues: JSON.stringify(columnValues)
         }
       });
